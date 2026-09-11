@@ -57,6 +57,11 @@ public class ScoreboardService {
 
     // key -> found timestamp (null = not found)
     private final ConcurrentHashMap<String, String> foundMap = new ConcurrentHashMap<>();
+    private final com.vulnmall.websocket.ScoreboardWebSocketHandler webSocketHandler;
+
+    public ScoreboardService(@org.springframework.context.annotation.Lazy com.vulnmall.websocket.ScoreboardWebSocketHandler webSocketHandler) {
+        this.webSocketHandler = webSocketHandler;
+    }
 
     /**
      * 플래그 생성: FLAG{KEY_랜덤해시}
@@ -68,11 +73,23 @@ public class ScoreboardService {
 
     /**
      * 취약점을 발견 상태로 마킹하고 플래그를 반환합니다.
+     * 웹소켓 클라이언트(스코어보드)에만 실시간으로 플래그 이벤트를 푸시합니다.
      */
     public String markFound(String vulnKey) {
         if (!VULN_CATALOG.containsKey(vulnKey)) return null;
-        foundMap.putIfAbsent(vulnKey, new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
-        return generateFlag(vulnKey);
+        String now = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
+        foundMap.putIfAbsent(vulnKey, now);
+        String flag = generateFlag(vulnKey);
+
+        if (webSocketHandler != null) {
+            String[] meta = VULN_CATALOG.get(vulnKey);
+            int foundCount = foundMap.size();
+            int total = VULN_CATALOG.size();
+            long percent = Math.round((double) foundCount / total * 100);
+            webSocketHandler.broadcastVulnFound(vulnKey, meta[0], meta[2], flag, foundCount, total, percent, foundMap.get(vulnKey));
+        }
+
+        return flag;
     }
 
     /**
@@ -111,5 +128,8 @@ public class ScoreboardService {
      */
     public void reset() {
         foundMap.clear();
+        if (webSocketHandler != null) {
+            webSocketHandler.broadcastReset();
+        }
     }
 }

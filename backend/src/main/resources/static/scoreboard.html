@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
     <title>🎯 취약점 스코어보드 - Vuln-Mall Security Playground</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -344,6 +345,7 @@
         <div class="brand">
             <h1>🎯 Vuln-Mall Scoreboard</h1>
             <span id="versionTag">OWASP WSTG v4.2 CTF</span>
+            <span id="wsStatusBadge" style="font-size:0.75rem; background:rgba(255,255,255,0.06); color:#8b949e; padding:3px 10px; border-radius:12px; border:1px solid var(--border-color); font-family:monospace;">⚪ WebSocket Connecting...</span>
         </div>
         <div class="nav-links">
             <a href="/" class="btn btn-secondary">🛍️ 쇼핑몰 메인</a>
@@ -524,9 +526,79 @@
             }, 3500);
         }
 
-        // 초기 로딩 및 주기적 갱신 (10초마다)
+        // --- WebSocket 실시간 Out-of-Band CTF 이벤트 수신 ---
+        let socket = null;
+        function initWebSocket() {
+            const badge = document.getElementById('wsStatusBadge');
+            const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${proto}//${location.host}/ws/scoreboard`;
+
+            try {
+                socket = new WebSocket(wsUrl);
+
+                socket.onopen = () => {
+                    badge.innerText = '🟢 WebSocket Live Connected (OOB)';
+                    badge.style.color = 'var(--accent-green)';
+                    badge.style.borderColor = 'rgba(46, 204, 113, 0.4)';
+                    badge.style.background = 'rgba(46, 204, 113, 0.1)';
+                };
+
+                socket.onclose = () => {
+                    badge.innerText = '🔴 WebSocket Reconnecting...';
+                    badge.style.color = 'var(--accent-red)';
+                    badge.style.borderColor = 'rgba(231, 76, 60, 0.4)';
+                    badge.style.background = 'rgba(231, 76, 60, 0.1)';
+                    setTimeout(initWebSocket, 3000);
+                };
+
+                socket.onerror = () => {
+                    socket.close();
+                };
+
+                socket.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        if (msg.type === 'VULN_FOUND') {
+                            // 실시간 취약점 발견 이벤트 처리
+                            handleRealtimeVulnFound(msg);
+                        } else if (msg.type === 'RESET') {
+                            showToast('🗑️ 스코어보드가 초기화되었습니다.');
+                            loadScoreboard();
+                        }
+                    } catch (e) {
+                        console.error('WS Parse error:', e);
+                    }
+                };
+            } catch (e) {
+                console.error('WS init error:', e);
+                setTimeout(initWebSocket, 3000);
+            }
+        }
+
+        function handleRealtimeVulnFound(data) {
+            // 1. 진척도 및 카운트 즉시 업데이트
+            document.getElementById('foundCount').innerText = data.foundCount;
+            document.getElementById('percentText').innerText = `(${data.progressPercent}%)`;
+            document.getElementById('progressBar').style.width = `${data.progressPercent}%`;
+
+            // 2. allVulns 데이터 갱신
+            const target = allVulns.find(v => v.wstgId === data.wstgId || v.name === data.name);
+            if (target) {
+                target.found = true;
+                target.flag = data.flag;
+                target.foundAt = data.foundAt;
+            }
+
+            // 3. 테이블 재렌더링
+            renderTable();
+
+            // 4. 화려한 토스트 알림
+            showToast(`🎉 [${data.wstgId}] 취약점 공략 성공! 플래그 획득: ${data.flag}`);
+        }
+
+        // 초기 데이터 로딩 및 웹소켓 연결
         loadScoreboard();
-        setInterval(loadScoreboard, 10000);
+        initWebSocket();
     </script>
 </body>
 </html>

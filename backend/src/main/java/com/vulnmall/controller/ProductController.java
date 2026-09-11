@@ -37,45 +37,36 @@ public class ProductController {
             @RequestParam(value = "sortBy", required = false, defaultValue = "id") String sortBy,
             @RequestParam(value = "sortOrder", required = false, defaultValue = "ASC") String sortOrder) {
 
-        String detectedFlag = null;
-
-        // SQLi / XSS 탐지 및 플래그 발급
+        // SQLi / XSS 탐지 시 백엔드 스코어보드 웹소켓으로만 OOB 전송 (HTTP 응답 오염 방지)
         if (keyword != null) {
             String kwUpper = keyword.toUpperCase();
             if (kwUpper.contains("<SCRIPT") || kwUpper.contains("<IMG") || kwUpper.contains("JAVASCRIPT:") || kwUpper.contains("ONERROR=")) {
-                detectedFlag = scoreboardService.markFound("XSS_REFLECTED");
+                scoreboardService.markFound("XSS_REFLECTED");
             } else if (kwUpper.contains("SLEEP(") || kwUpper.contains("WAITFOR") || kwUpper.contains("BENCHMARK")) {
-                detectedFlag = scoreboardService.markFound("SQLI_TIME_BLIND");
+                scoreboardService.markFound("SQLI_TIME_BLIND");
             } else if (kwUpper.contains(" AND ") || (kwUpper.contains("'") && (kwUpper.contains("1=1") || kwUpper.contains("1=2")))) {
-                detectedFlag = scoreboardService.markFound("SQLI_BOOL_BLIND");
+                scoreboardService.markFound("SQLI_BOOL_BLIND");
             } else if (kwUpper.contains("'") || kwUpper.contains("--") || kwUpper.contains(" OR ")) {
-                detectedFlag = scoreboardService.markFound("SQLI_LIKE");
+                scoreboardService.markFound("SQLI_LIKE");
             }
         }
 
         if (sortBy != null) {
             String sbUpper = sortBy.toUpperCase();
             if (sbUpper.contains("CASE") || sbUpper.contains("SELECT") || sbUpper.contains("WHEN") || sbUpper.contains("(")) {
-                detectedFlag = scoreboardService.markFound("SQLI_ORDERBY");
+                scoreboardService.markFound("SQLI_ORDERBY");
             }
         }
 
         List<Product> products = productRepository.searchProducts(keyword, category, sortBy, sortOrder);
 
-        // 검색어 반영 응답 (Reflected XSS 연계용 메타데이터 제공)
+        // 순수한 이커머스 응답 반환
         Map<String, Object> result = new HashMap<>();
         result.put("queryKeyword", keyword != null ? keyword : "");
         result.put("totalCount", products.size());
         result.put("products", products);
-        if (detectedFlag != null) {
-            result.put("flag", detectedFlag);
-        }
 
-        var responseBuilder = ResponseEntity.ok();
-        if (detectedFlag != null) {
-            responseBuilder.header("X-Vuln-Flag", detectedFlag);
-        }
-        return responseBuilder.body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -103,15 +94,10 @@ public class ProductController {
      */
     @GetMapping("/filter")
     public ResponseEntity<?> filterByCategory(@RequestParam("category") String category) {
-        String flag = null;
         if (category != null && (category.toUpperCase().contains("UNION") || category.contains("'"))) {
-            flag = scoreboardService.markFound("SQLI_UNION");
+            scoreboardService.markFound("SQLI_UNION");
         }
         List<Map<String, Object>> products = productRepository.filterByCategoryUnion(category);
-        var res = ResponseEntity.ok();
-        if (flag != null) {
-            res.header("X-Vuln-Flag", flag);
-        }
-        return res.body(products);
+        return ResponseEntity.ok(products);
     }
 }

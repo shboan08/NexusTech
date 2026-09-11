@@ -897,7 +897,7 @@ h1, h2, h3, h4 {
     }
 }
 
-/* Global Notice Bar (DOM XSS Sink) */
+/* Global Notice Bar */
 .global-notice-bar {
     background: linear-gradient(90deg, #ff0080, #7928ca);
     color: #fff;

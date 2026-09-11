@@ -81,23 +81,16 @@ public class CryptoAuthController {
                 if (part.startsWith("user=")) username = part.substring(5).trim();
             }
 
-            String flag = null;
             if ("ADMIN".equalsIgnoreCase(role)) {
-                flag = scoreboardService.markFound("AES_ECB");
+                scoreboardService.markFound("AES_ECB");
             }
 
-            Map<String, Object> resp = new java.util.HashMap<>(Map.of(
+            return ResponseEntity.ok(Map.of(
                     "status", "AUTHENTICATED",
                     "username", username,
                     "role", role,
                     "rawDecryptedPayload", payload
             ));
-            var res = ResponseEntity.ok();
-            if (flag != null) {
-                resp.put("flag", flag);
-                res.header("X-Vuln-Flag", flag);
-            }
-            return res.body(resp);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Decryption failed",
@@ -127,16 +120,14 @@ public class CryptoAuthController {
             user.setResetToken(token);
             userRepository.updateUser(user);
 
-            String flag = scoreboardService.markFound("PREDICTABLE_TOKEN");
+            scoreboardService.markFound("PREDICTABLE_TOKEN");
 
-            Map<String, Object> resp = new java.util.HashMap<>(Map.of(
+            return ResponseEntity.ok(Map.of(
                     "status", "SUCCESS",
                     "message", "비밀번호 재설정 이메일이 발송되었습니다 (시뮬레이션).",
                     "resetUrl", "/reset-password?token=" + token,
                     "algorithm", "MD5(username + timestamp)"
             ));
-            resp.put("flag", flag);
-            return ResponseEntity.ok().header("X-Vuln-Flag", flag).body(resp);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }

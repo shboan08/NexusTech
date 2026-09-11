@@ -29,9 +29,8 @@ public class ReceiptTemplateController {
         String template = body.get("template");
         if (template == null) return ResponseEntity.badRequest().body(Map.of("message", "template 문구를 입력하세요."));
 
-        String flag = null;
         if (template.contains("#{") && template.contains("}")) {
-            flag = scoreboardService.markFound("SSTI");
+            scoreboardService.markFound("SSTI");
         }
 
         try {
@@ -57,16 +56,10 @@ public class ReceiptTemplateController {
                 startIdx = closeIdx + 1;
             }
 
-            Map<String, Object> resp = new java.util.HashMap<>(Map.of(
+            return ResponseEntity.ok(Map.of(
                     "status", "SUCCESS",
                     "renderedMessage", result.toString()
             ));
-            var res = ResponseEntity.ok();
-            if (flag != null) {
-                resp.put("flag", flag);
-                res.header("X-Vuln-Flag", flag);
-            }
-            return res.body(resp);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Template Evaluation Error",

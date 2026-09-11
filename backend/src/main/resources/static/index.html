@@ -28,7 +28,7 @@
                 </div>
             </div>
 
-            <!-- Search Bar (Reflected / DOM XSS & SQLi) -->
+            <!-- Search Bar -->
             <div class="search-bar">
                 <input type="text" id="searchInput" placeholder="프리미엄 사이버 기어, 스펙 검색..." onkeydown="if(event.key==='Enter') app.handleSearch()">
                 <button class="search-btn" id="searchBtn" onclick="app.handleSearch()" aria-label="검색">
@@ -59,7 +59,6 @@
                     </button>
                 </div>
 
-                <a href="/scoreboard.html" class="btn btn-outline" style="border-color: #00f2fe; color: #00f2fe; font-weight: bold;" title="실시간 취약점 공략 현황판">🎯 스코어보드</a>
                 <button class="btn btn-outline" onclick="app.openInquiryModal()" title="1:1 문의">Q&A</button>
 
                 <button class="cart-btn" onclick="app.openCartModal()" aria-label="장바구니">
@@ -70,7 +69,7 @@
         </div>
     </header>
 
-    <!-- Global Notice Bar (WSTG-CLNT-01: DOM-Based XSS Sink) -->
+    <!-- Global Notice Bar -->
     <div id="globalNotice" class="global-notice-bar" style="display:none;"></div>
 
     <!-- Main Content -->
@@ -124,7 +123,7 @@
                 </div>
             </div>
 
-            <!-- Search Banner Notice (DOM / Reflected XSS Area) -->
+            <!-- Search Banner Notice -->
             <div id="searchBanner" class="search-banner" style="display:none;"></div>
 
             <!-- Products Grid -->
@@ -361,7 +360,7 @@
         </div>
     </div>
 
-    <!-- 1:1 Q&A Inquiry Board Modal (WSTG-INPV-02: Stored XSS & Second-Order SQLi) -->
+    <!-- 1:1 Q&A Inquiry Board Modal -->
     <div class="modal" id="inquiryModal">
         <div class="modal-backdrop" onclick="app.closeModal('inquiryModal')"></div>
         <div class="modal-dialog modal-lg">
@@ -392,7 +391,7 @@
         </div>
     </div>
 
-    <!-- Tracking Modal (WSTG-INPV-05: Time-Based Blind SQLi) -->
+    <!-- Tracking Modal -->
     <div class="modal" id="trackModal">
         <div class="modal-backdrop" onclick="app.closeModal('trackModal')"></div>
         <div class="modal-dialog modal-md">

@@ -63,20 +63,13 @@ public class InquiryController {
             return ResponseEntity.badRequest().body(Map.of("message", "제목과 내용을 입력해주세요."));
         }
 
-        String flag = null;
         String combined = (title + " " + content).toUpperCase();
         if (combined.contains("<SCRIPT") || combined.contains("<IMG") || combined.contains("ONERROR=") || combined.contains("<SVG") || combined.contains("JAVASCRIPT:")) {
-            flag = scoreboardService.markFound("XSS_STORED_INQ");
+            scoreboardService.markFound("XSS_STORED_INQ");
         }
 
         Long id = inquiryRepository.createInquiry(userId, username, title, content, isSecret);
-        var res = ResponseEntity.ok();
-        Map<String, Object> resp = new java.util.HashMap<>(Map.of("message", "문의글이 등록되었습니다.", "id", id));
-        if (flag != null) {
-            resp.put("flag", flag);
-            res.header("X-Vuln-Flag", flag);
-        }
-        return res.body(resp);
+        return ResponseEntity.ok(Map.of("message", "문의글이 등록되었습니다.", "id", id));
     }
 
     /**
@@ -93,23 +86,16 @@ public class InquiryController {
 
         Inquiry inquiry = inqOpt.get();
         // 2차 인젝션 발현 지점
-        String flag = null;
         if (inquiry.getTitle() != null && (inquiry.getTitle().contains("'") || inquiry.getTitle().toUpperCase().contains("UNION"))) {
-            flag = scoreboardService.markFound("SQLI_SECOND");
+            scoreboardService.markFound("SQLI_SECOND");
         }
 
         List<Map<String, Object>> logs = inquiryRepository.searchAuditLogsByTitle(inquiry.getTitle());
 
-        Map<String, Object> resp = new java.util.HashMap<>(Map.of(
+        return ResponseEntity.ok(Map.of(
                 "inquiryId", id,
                 "inquiryTitle", inquiry.getTitle(),
                 "matchedAuditLogs", logs
         ));
-        var res = ResponseEntity.ok();
-        if (flag != null) {
-            resp.put("flag", flag);
-            res.header("X-Vuln-Flag", flag);
-        }
-        return res.body(resp);
     }
 }

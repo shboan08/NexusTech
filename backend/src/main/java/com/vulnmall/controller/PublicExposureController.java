@@ -23,11 +23,9 @@ public class PublicExposureController {
      * 노출된 .git/HEAD 파일
      */
     @GetMapping(value = "/.git/HEAD", produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> getGitHead() {
-        String flag = scoreboardService.markFound("INFO_EXPOSURE");
-        var res = ResponseEntity.ok();
-        if (flag != null) res.header("X-Vuln-Flag", flag);
-        return res.body("ref: refs/heads/main\n");
+    public String getGitHead() {
+        scoreboardService.markFound("INFO_EXPOSURE");
+        return "ref: refs/heads/main\n";
     }
 
     /**
@@ -35,30 +33,26 @@ public class PublicExposureController {
      * 방치된 환경설정 파일 (.env)
      */
     @GetMapping(value = "/.env", produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> getEnvFile() {
-        String flag = scoreboardService.markFound("INFO_EXPOSURE");
-        var res = ResponseEntity.ok();
-        if (flag != null) res.header("X-Vuln-Flag", flag);
-        return res.body("# VULN-MALL PRODUCTION ENVIRONMENT BACKUP\n" +
+    public String getEnvFile() {
+        scoreboardService.markFound("INFO_EXPOSURE");
+        return "# VULN-MALL PRODUCTION ENVIRONMENT BACKUP\n" +
                "DATABASE_URL=jdbc:mysql://localhost:3306/vulnmall\n" +
                "DB_USERNAME=root\n" +
                "DB_PASSWORD=vulnroot1234\n" +
                "JWT_SECRET=VulnMallSuperSecretKeyForJWTSigning1234567890\n" +
                "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\n" +
-               "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\n");
+               "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\n";
     }
 
     /**
      * 방치된 데이터베이스 덤프 백업 파일 (/backup.sql)
      */
     @GetMapping(value = "/backup.sql", produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> getBackupSql() {
-        String flag = scoreboardService.markFound("INFO_EXPOSURE");
-        var res = ResponseEntity.ok();
-        if (flag != null) res.header("X-Vuln-Flag", flag);
-        return res.body("-- DUMP BACKUP VULNMALL 2026-09-01\n" +
+    public String getBackupSql() {
+        scoreboardService.markFound("INFO_EXPOSURE");
+        return "-- DUMP BACKUP VULNMALL 2026-09-01\n" +
                "INSERT INTO users (username, password, email, role) VALUES ('admin', 'admin123', 'admin@vulnmall.local', 'ADMIN');\n" +
-               "INSERT INTO users (username, password, email, role) VALUES ('victim', 'pass1234', 'victim@secure-corp.com', 'USER');\n");
+               "INSERT INTO users (username, password, email, role) VALUES ('victim', 'pass1234', 'victim@secure-corp.com', 'USER');\n";
     }
 
     /**
@@ -67,12 +61,8 @@ public class PublicExposureController {
      */
     @GetMapping("/api/auth/redirect")
     public void openRedirect(@RequestParam("url") String targetUrl, HttpServletResponse response) throws IOException {
-        String flag = null;
         if (targetUrl.startsWith("http://") || targetUrl.startsWith("https://") || targetUrl.startsWith("//")) {
-            flag = scoreboardService.markFound("OPEN_REDIRECT");
-        }
-        if (flag != null) {
-            response.setHeader("X-Vuln-Flag", flag);
+            scoreboardService.markFound("OPEN_REDIRECT");
         }
 
         // 미흡한 검증: 'vulnmall.local' 문자열 포함 여부만 단순 확인

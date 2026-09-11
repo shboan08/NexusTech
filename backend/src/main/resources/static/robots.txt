@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /scoreboard.html
+Disallow: /ws/
+Disallow: /api/scoreboard/
+Disallow: /actuator/

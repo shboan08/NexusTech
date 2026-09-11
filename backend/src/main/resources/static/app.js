@@ -36,58 +36,15 @@ const app = {
             this.loadProducts();
         }
 
-        // [WSTG-CLNT-01: DOM-Based XSS Sink]
         const hash = window.location.hash;
         if (hash && hash.startsWith('#notice=')) {
             const raw = decodeURIComponent(hash.substring(8));
             const bar = document.getElementById('globalNotice');
             if (bar) {
                 bar.style.display = 'block';
-                bar.innerHTML = '🔔 ' + raw; // Unfiltered innerHTML sink
-            }
-            if (raw.toUpperCase().includes('<SCRIPT') || raw.toUpperCase().includes('<IMG') || raw.toUpperCase().includes('ONERROR=')) {
-                fetch('/api/scoreboard/trigger', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ vulnKey: 'XSS_DOM' })
-                }).then(r => r.json()).then(d => {
-                    if (d.flag) app.showFlagToast(d.flag);
-                }).catch(() => {});
+                bar.innerHTML = '🔔 ' + raw;
             }
         }
-    },
-
-    showFlagToast(flag) {
-        let toast = document.getElementById('flagNotificationToast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'flagNotificationToast';
-            toast.style.cssText = `
-                position: fixed; top: 24px; right: 24px; z-index: 99999;
-                background: linear-gradient(135deg, #0d1117, #161b22);
-                border: 2px solid #00f2fe; border-radius: 12px; padding: 18px 24px;
-                box-shadow: 0 10px 30px rgba(0, 242, 254, 0.4); color: #fff;
-                font-family: 'Pretendard', sans-serif; display: flex; flex-direction: column; gap: 8px;
-                animation: slideIn 0.4s ease;
-            `;
-            document.body.appendChild(toast);
-        }
-        toast.innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px; font-weight:bold; font-size:1.05rem; color:#00f2fe;">
-                <span>🎉 취약점 공략 성공! 플래그 획득</span>
-            </div>
-            <div style="font-family: 'Fira Code', monospace; background:rgba(0,0,0,0.5); padding:8px 12px; border-radius:6px; color:#2ecc71; font-weight:600;">
-                ${flag}
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-                <span style="font-size:0.8rem; color:#8b949e;">스코어보드에 실시간 반영되었습니다.</span>
-                <a href="/scoreboard.html" style="color:#00f2fe; font-size:0.82rem; text-decoration:none; font-weight:600;">스코어보드 열기 →</a>
-            </div>
-        `;
-        toast.style.display = 'flex';
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, 6000);
     },
 
     async fetchWithAuth(url, options = {}) {
@@ -98,14 +55,7 @@ const app = {
         if (!options.headers['Content-Type'] && !(options.body instanceof FormData)) {
             options.headers['Content-Type'] = 'application/json';
         }
-        const res = await fetch(url, options);
-        try {
-            const flag = res.headers.get('X-Vuln-Flag');
-            if (flag) {
-                this.showFlagToast(flag);
-            }
-        } catch (e) {}
-        return res;
+        return await fetch(url, options);
     },
 
     updateNavUI() {
@@ -162,7 +112,7 @@ const app = {
             const res = await fetch(url);
             const data = await res.json();
 
-            // Reflected / DOM XSS: 검색 결과 배너에 사용자 입력 반영 (innerHTML)
+            // 검색 결과 배너에 사용자 검색어 표시
             const banner = document.getElementById('searchBanner');
             if (this.currentKeyword) {
                 banner.style.display = 'flex';
@@ -240,7 +190,7 @@ const app = {
     },
 
     // ==========================================
-    // Product Detail & Reviews (Stored XSS)
+    // Product Detail & Reviews
     // ==========================================
     async openProductModal(productId) {
         try {
@@ -251,7 +201,7 @@ const app = {
             const reviews = data.reviews || [];
 
             const container = document.getElementById('productDetailContent');
-            // Stored XSS: reviews의 comment를 innerHTML로 직접 주입
+            // 고객 리뷰 코멘트 렌더링
             container.innerHTML = `
                 <div class="detail-img-box">
                     <img src="${p.imageUrl}" alt="${p.name}">
@@ -323,7 +273,7 @@ const app = {
     },
 
     // ==========================================
-    // Cart & Business Logic Manipulation
+    // Cart Management
     // ==========================================
     async addToCartQuick(productId, price) {
         if (!this.token) {
@@ -421,7 +371,7 @@ const app = {
         if (!code) return;
 
         try {
-            // [WSTG-INPV-05: Boolean-Based Blind SQLi API 연동]
+            // 쿠폰 코드 유효성 검증 API 연동
             const res = await fetch(`/api/coupons/verify?code=${encodeURIComponent(code)}`);
             const data = await res.json();
 
@@ -479,7 +429,7 @@ const app = {
                     recipientName,
                     phone,
                     shippingAddress,
-                    totalAmount // 클라이언트가 변조 가능한 금액
+                    totalAmount
                 })
             });
 
@@ -603,7 +553,7 @@ const app = {
     },
 
     // ==========================================
-    // My Page & IDOR Orders
+    // My Page & Order Management
     // ==========================================
     async openMyPageModal() {
         if (!this.currentUser) return;
@@ -671,7 +621,7 @@ const app = {
     },
 
     // ==========================================
-    // Network Diagnostic Tool (Command Injection)
+    // Network Diagnostic Tool
     // ==========================================
     openLogisticsModal() {
         this.openModal('logisticsModal');
@@ -699,7 +649,7 @@ const app = {
     },
 
     // ==========================================
-    // 1:1 Q&A Inquiry (Stored XSS & Second-Order SQLi)
+    // 1:1 Q&A Inquiry
     // ==========================================
     openInquiryModal() {
         this.openModal('inquiryModal');
@@ -715,7 +665,7 @@ const app = {
                 container.innerHTML = '<p class="text-muted">등록된 문의 내역이 없습니다.</p>';
                 return;
             }
-            // Stored XSS: content를 innerHTML로 렌더링
+            // 문의 본문 내용 렌더링
             container.innerHTML = list.map(inq => `
                 <div class="inquiry-item">
                     <div class="inquiry-item-header">
@@ -753,7 +703,7 @@ const app = {
     },
 
     // ==========================================
-    // Real-Time Cargo Tracking (Time-Based Blind SQLi)
+    // Real-Time Cargo Tracking
     // ==========================================
     openTrackModal() {
         this.openModal('trackModal');

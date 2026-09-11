@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Products Table (is_hidden can be found via SQLi)
+-- 2. Products Table
 CREATE TABLE IF NOT EXISTS products (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
--- 6. Reviews Table (Stored XSS Target)
+-- 6. Reviews Table
 CREATE TABLE IF NOT EXISTS reviews (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- 7. Coupons Table (Race condition / replay testing)
+-- 7. Coupons Table
 CREATE TABLE IF NOT EXISTS coupons (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(50) NOT NULL UNIQUE,
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS coupons (
     is_used BOOLEAN DEFAULT FALSE
 );
 
--- 8. Inquiries Table (1:1 Q&A Board - Stored XSS & Second-Order SQLi source)
+-- 8. Inquiries Table
 CREATE TABLE IF NOT EXISTS inquiries (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS inquiries (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- 9. Audit Logs Table (Second-Order SQLi Trigger)
+-- 9. Audit Logs Table
 CREATE TABLE IF NOT EXISTS audit_logs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     action VARCHAR(100),

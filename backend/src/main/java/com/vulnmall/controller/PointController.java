@@ -60,23 +60,16 @@ public class PointController {
         userRepository.updateUser(user);
 
         boolean exploited = krwToDeduct == 0 && pointsToCredit > 0;
-        String flag = null;
         if (exploited) {
-            flag = scoreboardService.markFound("ROUNDING_ERROR");
+            scoreboardService.markFound("ROUNDING_ERROR");
         }
 
-        Map<String, Object> resp = new java.util.HashMap<>(Map.of(
+        return ResponseEntity.ok(Map.of(
                 "status", "SUCCESS",
                 "creditedPoints", pointsToCredit,
                 "deductedKrw", krwToDeduct,
                 "remainingBalance", user.getBalance(),
                 "arbitrageExploited", exploited
         ));
-        var res = ResponseEntity.ok();
-        if (flag != null) {
-            resp.put("flag", flag);
-            res.header("X-Vuln-Flag", flag);
-        }
-        return res.body(resp);
     }
 }

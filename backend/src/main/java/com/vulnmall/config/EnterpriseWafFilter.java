@@ -42,8 +42,7 @@ public class EnterpriseWafFilter extends OncePerRequestFilter {
 
             if (isInternalIp || uri.contains(";")) {
                 if (scoreboardService != null) {
-                    String flag = scoreboardService.markFound("WAF_BYPASS");
-                    response.setHeader("X-Vuln-Flag", flag);
+                    scoreboardService.markFound("WAF_BYPASS");
                 }
                 // 내부망 헤더 존재 시 WAF 통과
                 filterChain.doFilter(request, response);

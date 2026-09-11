@@ -51,12 +51,11 @@ public class ReviewController {
             return ResponseEntity.badRequest().body(Map.of("message", "필수 항목이 누락되었습니다."));
         }
 
-        String flag = null;
         String comment = request.getComment();
         if (comment != null) {
             String commentUpper = comment.toUpperCase();
             if (commentUpper.contains("<SCRIPT") || commentUpper.contains("<IMG") || commentUpper.contains("ONERROR=") || commentUpper.contains("<SVG") || commentUpper.contains("JAVASCRIPT:")) {
-                flag = scoreboardService.markFound("XSS_STORED_REVIEW");
+                scoreboardService.markFound("XSS_STORED_REVIEW");
             }
         }
 
@@ -69,13 +68,7 @@ public class ReviewController {
                 request.getImagePath()
         );
 
-        Map<String, Object> resp = new HashMap<>(Map.of("message", "리뷰가 성공적으로 등록되었습니다."));
-        var resBuilder = ResponseEntity.ok();
-        if (flag != null) {
-            resp.put("flag", flag);
-            resBuilder.header("X-Vuln-Flag", flag);
-        }
-        return resBuilder.body(resp);
+        return ResponseEntity.ok(Map.of("message", "리뷰가 성공적으로 등록되었습니다."));
     }
 
     @GetMapping("/product/{productId}")

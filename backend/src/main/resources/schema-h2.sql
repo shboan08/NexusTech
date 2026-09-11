@@ -1,4 +1,4 @@
--- MySQL Compatible SLEEP alias for Time-Based Blind SQLi in H2
+-- MySQL Compatible SLEEP alias for H2
 CREATE ALIAS IF NOT EXISTS SLEEP FOR "com.vulnmall.config.H2Functions.sleep";
 
 -- Users Table
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS coupons (
     is_used BOOLEAN DEFAULT FALSE
 );
 
--- Inquiries Table (1:1 Q&A Board - Stored XSS & Second-Order SQLi source)
+-- Inquiries Table
 CREATE TABLE IF NOT EXISTS inquiries (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS inquiries (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Audit Logs Table (Used for Second-Order SQLi triggering)
+-- Audit Logs Table
 CREATE TABLE IF NOT EXISTS audit_logs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     action VARCHAR(100),
