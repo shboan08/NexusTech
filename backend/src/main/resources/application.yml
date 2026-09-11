@@ -1,0 +1,40 @@
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: always
+    include-exception: true
+
+spring:
+  application:
+    name: vuln-mall
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/vulnmall?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:vulnroot1234}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+  web:
+    resources:
+      static-locations: classpath:/static/,file:uploads/
+
+# Spring Actuator - Intentionally expose sensitive endpoints for DAST Information Disclosure checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    env:
+      show-values: always
+    health:
+      show-details: always
+
+# JWT Config (Intentionally weak secret for brute-forcing & cracking)
+jwt:
+  secret: "VulnMallSuperSecretKeyForJWTSigning1234567890"
+  expiration: 86400000 # 24 hours

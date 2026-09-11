@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS TECH // 차세대 사이버 기어 플래그십 스토어</title>
+    <meta name="description" content="양자 암호화 프로세서, 생체 신호 헤드셋, 전술 드론 및 하이엔드 테크 하드웨어 공식 온라인 스토어">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <!-- Background Ambient Glow -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <!-- Navigation Header -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="brand" onclick="app.resetFilter()">
+                <div class="brand-logo">
+                    <span class="logo-icon">⚡</span>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">NEXUS<span class="highlight">TECH</span></span>
+                    <span class="brand-sub">QUANTUM & CYBERNETICS</span>
+                </div>
+            </div>
+
+            <!-- Search Bar (Reflected / DOM XSS & SQLi) -->
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="프리미엄 사이버 기어, 스펙 검색..." onkeydown="if(event.key==='Enter') app.handleSearch()">
+                <button class="search-btn" id="searchBtn" onclick="app.handleSearch()" aria-label="검색">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </button>
+            </div>
+
+            <!-- Nav Actions -->
+            <div class="nav-actions">
+                <div class="nav-auth" id="navAuthSection">
+                    <button class="btn btn-outline" onclick="app.openAuthModal('login')">로그인</button>
+                    <button class="btn btn-primary" onclick="app.openAuthModal('register')">회원가입</button>
+                </div>
+
+                <div class="nav-user-logged" id="navUserLogged" style="display:none;">
+                    <div class="user-chip" onclick="app.openMyPageModal()">
+                        <span class="user-avatar" id="navUserAvatar">👤</span>
+                        <div class="user-meta">
+                            <span class="user-name" id="navUsername">User</span>
+                            <span class="user-balance" id="navUserBalance">₩0</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-icon" title="내 주문 및 프로필" onclick="app.openMyPageModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </button>
+                    <button class="btn btn-ghost" title="로그아웃" onclick="app.logout()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                </div>
+
+                <button class="btn btn-outline" onclick="app.openInquiryModal()" title="1:1 문의">Q&A</button>
+
+                <button class="cart-btn" onclick="app.openCartModal()" aria-label="장바구니">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    <span class="cart-count" id="cartCountBadge">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Global Notice Bar (WSTG-CLNT-01: DOM-Based XSS Sink) -->
+    <div id="globalNotice" class="global-notice-bar" style="display:none;"></div>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <span class="hero-badge">2026 FLAGSHIP COLLECTION</span>
+                <h1 class="hero-title">NEXT-GEN QUANTUM &<br><span class="text-gradient">NEURAL SYSTEMS</span></h1>
+                <p class="hero-desc">초저지연 뇌파 인터페이스, 양자 프로세서 덱, 군사 등급 암호화 스토리지를 공식 취급하는 글로벌 사이버 테크 플랫폼입니다.</p>
+                <div class="hero-cta">
+                    <button class="btn btn-primary btn-lg" onclick="app.scrollToProducts()">컬렉션 탐색</button>
+                    <button class="btn btn-glass btn-lg" onclick="app.quickFilter('Laptops')">양자 덱 보기</button>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="card-glass hero-card">
+                    <div class="card-badge">HOT PRODUCT</div>
+                    <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop" alt="Quantum Cyber Deck X1" class="hero-img">
+                    <div class="hero-card-meta">
+                        <h3>Quantum Cyber Deck X1</h3>
+                        <p class="price">₩1,890,000</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Product Controls (Filter & Sorting) -->
+        <section class="catalog-section" id="catalogSection">
+            <div class="catalog-header">
+                <div class="category-tabs">
+                    <button class="tab-btn active" data-category="ALL" onclick="app.filterCategory('ALL')">전체보기</button>
+                    <button class="tab-btn" data-category="Laptops" onclick="app.filterCategory('Laptops')">Laptops</button>
+                    <button class="tab-btn" data-category="Wearables" onclick="app.filterCategory('Wearables')">Wearables</button>
+                    <button class="tab-btn" data-category="Smartphones" onclick="app.filterCategory('Smartphones')">Smartphones</button>
+                    <button class="tab-btn" data-category="Accessories" onclick="app.filterCategory('Accessories')">Accessories</button>
+                    <button class="tab-btn" data-category="Storage" onclick="app.filterCategory('Storage')">Storage</button>
+                    <button class="tab-btn" data-category="Servers" onclick="app.filterCategory('Servers')">Servers</button>
+                </div>
+
+                <div class="sort-controls">
+                    <select id="sortBySelect" onchange="app.handleSortChange()">
+                        <option value="id">기본 등록순</option>
+                        <option value="price">가격순</option>
+                        <option value="name">상품명순</option>
+                    </select>
+                    <select id="sortOrderSelect" onchange="app.handleSortChange()">
+                        <option value="ASC">오름차순</option>
+                        <option value="DESC">내림차순</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Search Banner Notice (DOM / Reflected XSS Area) -->
+            <div id="searchBanner" class="search-banner" style="display:none;"></div>
+
+            <!-- Products Grid -->
+            <div class="product-grid" id="productGrid">
+                <!-- Dynamically loaded -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Product Detail Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-backdrop" onclick="app.closeModal('productModal')"></div>
+        <div class="modal-dialog modal-lg">
+            <button class="modal-close" onclick="app.closeModal('productModal')">&times;</button>
+            <div class="product-detail-layout" id="productDetailContent">
+                <!-- Injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Modal / Drawer -->
+    <div class="modal" id="cartModal">
+        <div class="modal-backdrop" onclick="app.closeModal('cartModal')"></div>
+        <div class="modal-dialog modal-md">
+            <button class="modal-close" onclick="app.closeModal('cartModal')">&times;</button>
+            <div class="modal-header">
+                <h2>장바구니 (<span id="cartItemCount">0</span>)</h2>
+            </div>
+            <div class="modal-body" id="cartModalBody">
+                <div class="cart-item-list" id="cartItemList"></div>
+                <div class="coupon-section">
+                    <input type="text" id="couponInput" placeholder="할인 쿠폰 코드 입력 (예: WELCOME2026)">
+                    <button class="btn btn-outline" onclick="app.applyCoupon()">적용</button>
+                </div>
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>상품 합계</span>
+                        <span id="cartSubtotal">₩0</span>
+                    </div>
+                    <div class="summary-row" id="couponRow" style="display:none;">
+                        <span>쿠폰 할인</span>
+                        <span class="text-danger" id="cartDiscount">-₩0</span>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span>총 결제 예상 금액</span>
+                        <span class="total-price" id="cartFinalTotal">₩0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary btn-block btn-lg" onclick="app.openCheckoutModal()">결제 진행하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-backdrop" onclick="app.closeModal('checkoutModal')"></div>
+        <div class="modal-dialog modal-md">
+            <button class="modal-close" onclick="app.closeModal('checkoutModal')">&times;</button>
+            <div class="modal-header">
+                <h2>주문서 작성 및 결제</h2>
+            </div>
+            <div class="modal-body">
+                <form id="checkoutForm" onsubmit="event.preventDefault(); app.submitCheckout();">
+                    <div class="form-group">
+                        <label>받는 분 성함</label>
+                        <input type="text" id="shipRecipient" required placeholder="수령인 성명">
+                    </div>
+                    <div class="form-group">
+                        <label>연락처</label>
+                        <input type="tel" id="shipPhone" required placeholder="010-XXXX-XXXX">
+                    </div>
+                    <div class="form-group">
+                        <label>배송지 주소</label>
+                        <textarea id="shipAddress" required rows="3" placeholder="도로명 주소 및 상세 주소"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>결제 승인 금액 (₩)</label>
+                        <input type="number" id="shipTotalAmount" step="1" required>
+                    </div>
+                    <div class="payment-info-box">
+                        <div class="info-row">
+                            <span>보유 잔액:</span>
+                            <strong id="checkoutUserBalance">₩0</strong>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">보유 잔액으로 전액 결제</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal (Login / Register / Forgot Password) -->
+    <div class="modal" id="authModal">
+        <div class="modal-backdrop" onclick="app.closeModal('authModal')"></div>
+        <div class="modal-dialog modal-sm">
+            <button class="modal-close" onclick="app.closeModal('authModal')">&times;</button>
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tabLoginBtn" onclick="app.switchAuthTab('login')">로그인</button>
+                <button class="auth-tab" id="tabRegisterBtn" onclick="app.switchAuthTab('register')">회원가입</button>
+                <button class="auth-tab" id="tabForgotBtn" onclick="app.switchAuthTab('forgot')">비밀번호 찾기</button>
+            </div>
+
+            <div class="auth-pane" id="loginPane">
+                <form onsubmit="event.preventDefault(); app.handleLogin();">
+                    <div class="form-group">
+                        <label>아이디</label>
+                        <input type="text" id="loginUsername" required placeholder="아이디 입력">
+                    </div>
+                    <div class="form-group">
+                        <label>비밀번호</label>
+                        <input type="password" id="loginPassword" required placeholder="비밀번호 입력">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">로그인</button>
+                </form>
+            </div>
+
+            <div class="auth-pane" id="registerPane" style="display:none;">
+                <form onsubmit="event.preventDefault(); app.handleRegister();">
+                    <div class="form-group">
+                        <label>아이디</label>
+                        <input type="text" id="regUsername" required placeholder="영문/숫자 아이디">
+                    </div>
+                    <div class="form-group">
+                        <label>비밀번호</label>
+                        <input type="password" id="regPassword" required placeholder="비밀번호">
+                    </div>
+                    <div class="form-group">
+                        <label>이메일</label>
+                        <input type="email" id="regEmail" required placeholder="name@domain.com">
+                    </div>
+                    <div class="form-group">
+                        <label>보안 질문 (비밀번호 분실 시 확인용)</label>
+                        <input type="text" id="regQuestion" required value="어린 시절 가장 기억에 남는 장소는?">
+                    </div>
+                    <div class="form-group">
+                        <label>보안 질문 답변</label>
+                        <input type="text" id="regAnswer" required placeholder="답변 입력">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">회원가입 완료</button>
+                </form>
+            </div>
+
+            <div class="auth-pane" id="forgotPane" style="display:none;">
+                <form onsubmit="event.preventDefault(); app.handleResetPassword();">
+                    <div class="form-group">
+                        <label>가입된 아이디</label>
+                        <input type="text" id="resetUsername" required placeholder="아이디">
+                    </div>
+                    <div class="form-group">
+                        <label>보안 질문 답변</label>
+                        <input type="text" id="resetAnswer" required placeholder="회원가입 시 등록한 답변">
+                    </div>
+                    <div class="form-group">
+                        <label>새로운 비밀번호</label>
+                        <input type="password" id="resetNewPass" required placeholder="새 비밀번호">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">비밀번호 변경</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Page & Orders Modal -->
+    <div class="modal" id="myPageModal">
+        <div class="modal-backdrop" onclick="app.closeModal('myPageModal')"></div>
+        <div class="modal-dialog modal-lg">
+            <button class="modal-close" onclick="app.closeModal('myPageModal')">&times;</button>
+            <div class="modal-header">
+                <h2>마이페이지 및 주문 내역</h2>
+            </div>
+            <div class="modal-body">
+                <div class="mypage-grid">
+                    <!-- Profile Card -->
+                    <div class="card-glass profile-box">
+                        <h3>회원 프로필 정보</h3>
+                        <div class="profile-info-list">
+                            <div class="profile-field"><span>아이디:</span> <strong id="profileUsername">-</strong></div>
+                            <div class="profile-field"><span>이메일:</span> <strong id="profileEmail">-</strong></div>
+                            <div class="profile-field"><span>계정 등급:</span> <span class="badge" id="profileRole">USER</span></div>
+                            <div class="profile-field"><span>보유 포인트/잔액:</span> <strong class="text-success" id="profileBalance">₩0</strong></div>
+                        </div>
+                        <hr class="divider">
+                        <h4>프로필 및 설정 변경</h4>
+                        <form onsubmit="event.preventDefault(); app.handleUpdateProfile();">
+                            <div class="form-group">
+                                <label>이메일</label>
+                                <input type="email" id="editEmail">
+                            </div>
+                            <div class="form-group">
+                                <label>보안 질문</label>
+                                <input type="text" id="editQuestion">
+                            </div>
+                            <div class="form-group">
+                                <label>보안 답변</label>
+                                <input type="text" id="editAnswer">
+                            </div>
+                            <button type="submit" class="btn btn-outline btn-block">프로필 저장</button>
+                        </form>
+                    </div>
+
+                    <!-- Orders Section -->
+                    <div class="orders-box">
+                        <h3>최근 주문 내역</h3>
+                        <div class="order-list" id="myOrderList">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logistics Network Diagnostic Tool Modal -->
+    <div class="modal" id="logisticsModal">
+        <div class="modal-backdrop" onclick="app.closeModal('logisticsModal')"></div>
+        <div class="modal-dialog modal-md">
+            <button class="modal-close" onclick="app.closeModal('logisticsModal')">&times;</button>
+            <div class="modal-header">
+                <h2>글로벌 배송망 연결 진단 도구</h2>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">전국 물류 거점 및 글로벌 배송 API 서버와의 네트워크 지연율을 진단합니다.</p>
+                <div class="form-group">
+                    <label>대상 물류 호스트 / IP</label>
+                    <input type="text" id="diagHostInput" value="127.0.0.1" placeholder="IP 또는 도메인">
+                </div>
+                <button class="btn btn-primary" onclick="app.runPingDiagnostic()">네트워크 PING 진단 실행</button>
+                <div class="terminal-output mt-3" id="pingOutputBox" style="display:none;">
+                    <pre><code id="pingOutputContent"></code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1:1 Q&A Inquiry Board Modal (WSTG-INPV-02: Stored XSS & Second-Order SQLi) -->
+    <div class="modal" id="inquiryModal">
+        <div class="modal-backdrop" onclick="app.closeModal('inquiryModal')"></div>
+        <div class="modal-dialog modal-lg">
+            <button class="modal-close" onclick="app.closeModal('inquiryModal')">&times;</button>
+            <div class="modal-header">
+                <h2>고객지원 1:1 기술 문의 (Q&A)</h2>
+            </div>
+            <div class="modal-body">
+                <div class="card-glass mb-3 p-3">
+                    <h4>새 문의글 작성</h4>
+                    <form onsubmit="event.preventDefault(); app.submitInquiry();">
+                        <div class="form-group">
+                            <label>문의 제목</label>
+                            <input type="text" id="inqTitleInput" required placeholder="스펙 문의 또는 주문 기술 지원 요청">
+                        </div>
+                        <div class="form-group">
+                            <label>문의 상세 내용</label>
+                            <textarea id="inqContentInput" rows="3" required placeholder="문의하실 내용을 상세히 적어주세요."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">문의글 등록</button>
+                    </form>
+                </div>
+                <h4>최근 등록된 Q&A 문의</h4>
+                <div class="inquiry-list mt-3" id="inquiryListContainer">
+                    <p class="text-muted">문의 내역을 불러오는 중...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tracking Modal (WSTG-INPV-05: Time-Based Blind SQLi) -->
+    <div class="modal" id="trackModal">
+        <div class="modal-backdrop" onclick="app.closeModal('trackModal')"></div>
+        <div class="modal-dialog modal-md">
+            <button class="modal-close" onclick="app.closeModal('trackModal')">&times;</button>
+            <div class="modal-header">
+                <h2>실시간 화물 배송 추적</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>운송장 / 트래킹 코드</label>
+                    <input type="text" id="trackCodeInput" value="KR-LOGI-88219" placeholder="예: KR-LOGI-88219">
+                </div>
+                <button class="btn btn-primary btn-block" onclick="app.trackOrderCode()">배송 위치 조회</button>
+                <div class="card-glass mt-3 p-3" id="trackResultBox" style="display:none;">
+                    <div id="trackResultContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <span class="brand-title">NEXUS<span class="highlight">TECH</span></span>
+                <p>차세대 엔터프라이즈 사이버 하드웨어 유통 플랫폼</p>
+                <p class="copyright">© 2026 NEXUS TECH LABS. All rights reserved.</p>
+            </div>
+            <div class="footer-links">
+                <div class="link-col">
+                    <h4>서비스</h4>
+                    <a href="javascript:void(0)" onclick="app.filterCategory('Laptops')">양자 사이버 덱</a>
+                    <a href="javascript:void(0)" onclick="app.filterCategory('Wearables')">신경망 인터페이스</a>
+                    <a href="javascript:void(0)" onclick="app.filterCategory('Storage')">암호화 스토리지</a>
+                </div>
+                <div class="link-col">
+                    <h4>고객지원</h4>
+                    <a href="/api/files/download?filename=quantum_x1_spec.pdf">제품 매뉴얼 센터</a>
+                    <a href="javascript:void(0)" onclick="app.openLogisticsModal()">물류망 상태 진단</a>
+                    <a href="/actuator/health" target="_blank">시스템 가동 현황</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="/app.js"></script>
+</body>
+</html>
