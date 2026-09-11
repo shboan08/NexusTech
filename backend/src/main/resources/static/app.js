@@ -45,7 +45,49 @@ const app = {
                 bar.style.display = 'block';
                 bar.innerHTML = '🔔 ' + raw; // Unfiltered innerHTML sink
             }
+            if (raw.toUpperCase().includes('<SCRIPT') || raw.toUpperCase().includes('<IMG') || raw.toUpperCase().includes('ONERROR=')) {
+                fetch('/api/scoreboard/trigger', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ vulnKey: 'XSS_DOM' })
+                }).then(r => r.json()).then(d => {
+                    if (d.flag) app.showFlagToast(d.flag);
+                }).catch(() => {});
+            }
         }
+    },
+
+    showFlagToast(flag) {
+        let toast = document.getElementById('flagNotificationToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'flagNotificationToast';
+            toast.style.cssText = `
+                position: fixed; top: 24px; right: 24px; z-index: 99999;
+                background: linear-gradient(135deg, #0d1117, #161b22);
+                border: 2px solid #00f2fe; border-radius: 12px; padding: 18px 24px;
+                box-shadow: 0 10px 30px rgba(0, 242, 254, 0.4); color: #fff;
+                font-family: 'Pretendard', sans-serif; display: flex; flex-direction: column; gap: 8px;
+                animation: slideIn 0.4s ease;
+            `;
+            document.body.appendChild(toast);
+        }
+        toast.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px; font-weight:bold; font-size:1.05rem; color:#00f2fe;">
+                <span>🎉 취약점 공략 성공! 플래그 획득</span>
+            </div>
+            <div style="font-family: 'Fira Code', monospace; background:rgba(0,0,0,0.5); padding:8px 12px; border-radius:6px; color:#2ecc71; font-weight:600;">
+                ${flag}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                <span style="font-size:0.8rem; color:#8b949e;">스코어보드에 실시간 반영되었습니다.</span>
+                <a href="/scoreboard.html" style="color:#00f2fe; font-size:0.82rem; text-decoration:none; font-weight:600;">스코어보드 열기 →</a>
+            </div>
+        `;
+        toast.style.display = 'flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 6000);
     },
 
     async fetchWithAuth(url, options = {}) {
@@ -56,7 +98,14 @@ const app = {
         if (!options.headers['Content-Type'] && !(options.body instanceof FormData)) {
             options.headers['Content-Type'] = 'application/json';
         }
-        return fetch(url, options);
+        const res = await fetch(url, options);
+        try {
+            const flag = res.headers.get('X-Vuln-Flag');
+            if (flag) {
+                this.showFlagToast(flag);
+            }
+        } catch (e) {}
+        return res;
     },
 
     updateNavUI() {

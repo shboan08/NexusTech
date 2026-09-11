@@ -16,9 +16,11 @@ import java.util.Optional;
 public class PointController {
 
     private final UserRepository userRepository;
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
 
-    public PointController(UserRepository userRepository) {
+    public PointController(UserRepository userRepository, com.vulnmall.service.ScoreboardService scoreboardService) {
         this.userRepository = userRepository;
+        this.scoreboardService = scoreboardService;
     }
 
     /**
@@ -57,12 +59,24 @@ public class PointController {
         user.setBalance(user.getBalance().subtract(BigDecimal.valueOf(krwToDeduct)));
         userRepository.updateUser(user);
 
-        return ResponseEntity.ok(Map.of(
+        boolean exploited = krwToDeduct == 0 && pointsToCredit > 0;
+        String flag = null;
+        if (exploited) {
+            flag = scoreboardService.markFound("ROUNDING_ERROR");
+        }
+
+        Map<String, Object> resp = new java.util.HashMap<>(Map.of(
                 "status", "SUCCESS",
                 "creditedPoints", pointsToCredit,
                 "deductedKrw", krwToDeduct,
                 "remainingBalance", user.getBalance(),
-                "arbitrageExploited", krwToDeduct == 0 && pointsToCredit > 0
+                "arbitrageExploited", exploited
         ));
+        var res = ResponseEntity.ok();
+        if (flag != null) {
+            resp.put("flag", flag);
+            res.header("X-Vuln-Flag", flag);
+        }
+        return res.body(resp);
     }
 }

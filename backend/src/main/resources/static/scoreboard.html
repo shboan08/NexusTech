@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 취약점 스코어보드 - Vuln-Mall Security Playground</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Pretendard:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: rgba(22, 27, 34, 0.85);
+            --border-color: rgba(240, 246, 252, 0.1);
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --accent-purple: #a855f7;
+            --accent-orange: #f39c12;
+            --text-main: #f0f6fc;
+            --text-sub: #8b949e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(79, 172, 254, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 40%);
+            color: var(--text-main);
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        header {
+            background: rgba(13, 17, 23, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand span {
+            font-size: 0.8rem;
+            background: rgba(0, 242, 254, 0.15);
+            color: var(--accent-cyan);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: #000;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+        }
+
+        .btn-danger {
+            background: rgba(231, 76, 60, 0.15);
+            color: var(--accent-red);
+            border-color: rgba(231, 76, 60, 0.3);
+        }
+        .btn-danger:hover {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: rgba(240, 246, 252, 0.08);
+            color: var(--text-main);
+            border-color: var(--border-color);
+        }
+        .btn-secondary:hover {
+            background: rgba(240, 246, 252, 0.15);
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 32px auto;
+            padding: 0 24px;
+        }
+
+        /* Stats Card */
+        .stats-banner {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 28px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 16px;
+        }
+
+        .stats-title {
+            font-size: 1.1rem;
+            color: var(--text-sub);
+        }
+
+        .stats-score {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 14px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+            border-radius: 10px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 12px rgba(46, 204, 113, 0.6);
+        }
+
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .filter-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-sub);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active, .filter-chip:hover {
+            background: rgba(0, 242, 254, 0.15);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* Table */
+        .board-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(240, 246, 252, 0.04);
+            padding: 16px 20px;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-sub);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(240, 246, 252, 0.05);
+            font-size: 0.92rem;
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .badge-Injection { background: rgba(231, 76, 60, 0.15); color: #ff6b6b; border: 1px solid rgba(231,76,60,0.3); }
+        .badge-XSS { background: rgba(243, 156, 18, 0.15); color: #f39c12; border: 1px solid rgba(243,156,18,0.3); }
+        .badge-Auth { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); }
+        .badge-Crypto { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-BizLogic { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+        .badge-Client { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236,72,153,0.3); }
+        .badge-Config { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.3); }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-unsolved {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-sub);
+        }
+
+        .status-solved {
+            background: rgba(46, 204, 113, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+            50% { box-shadow: 0 0 10px 2px rgba(46, 204, 113, 0.2); }
+        }
+
+        .flag-box {
+            font-family: 'Fira Code', monospace;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px dashed var(--border-color);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: var(--accent-cyan);
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .copy-btn:hover {
+            color: #fff;
+        }
+
+        .action-btn {
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            background: rgba(0, 242, 254, 0.15);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1f2937;
+            color: #fff;
+            padding: 14px 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent-green);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1000;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <h1>🎯 Vuln-Mall Scoreboard</h1>
+            <span id="versionTag">OWASP WSTG v4.2 CTF</span>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="btn btn-secondary">🛍️ 쇼핑몰 메인</a>
+            <button onclick="loadScoreboard()" class="btn btn-secondary">🔄 새로고침</button>
+            <button onclick="confirmReset()" class="btn btn-danger">🗑️ 발견 기록 초기화</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Dashboard Stats -->
+        <div class="stats-banner">
+            <div class="stats-header">
+                <div>
+                    <div class="stats-title">실시간 취약점 공략 진척도</div>
+                    <div style="font-size: 0.85rem; color: var(--text-sub); margin-top: 4px;">
+                        총 36개 고난도 취약점 중 현재 발견된 항목 수입니다.
+                    </div>
+                </div>
+                <div class="stats-score">
+                    <span id="foundCount">0</span> / <span id="totalCount">36</span> 
+                    <span style="font-size: 1.2rem; color: var(--text-sub);" id="percentText">(0%)</span>
+                </div>
+            </div>
+
+            <div class="progress-track">
+                <div class="progress-fill" id="progressBar" style="width: 0%;"></div>
+            </div>
+
+            <div class="category-filters" id="categoryFilters">
+                <div class="filter-chip active" onclick="filterCategory('ALL')">전체보기</div>
+                <div class="filter-chip" onclick="filterCategory('Injection')">💉 Injection (11)</div>
+                <div class="filter-chip" onclick="filterCategory('XSS')">⚡ XSS (3)</div>
+                <div class="filter-chip" onclick="filterCategory('Auth')">🔐 Auth/Access (6)</div>
+                <div class="filter-chip" onclick="filterCategory('Crypto')">🔑 Crypto (2)</div>
+                <div class="filter-chip" onclick="filterCategory('BizLogic')">⚙️ Business Logic (5)</div>
+                <div class="filter-chip" onclick="filterCategory('Client')">🌐 Client-Side (3)</div>
+                <div class="filter-chip" onclick="filterCategory('Config')">🛡️ Config/Exposure (2)</div>
+            </div>
+        </div>
+
+        <!-- Vulnerabilities Table -->
+        <div class="board-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th style="width: 130px;">WSTG ID</th>
+                        <th style="width: 120px;">분류</th>
+                        <th>취약점 명칭</th>
+                        <th style="width: 110px;">상태</th>
+                        <th style="width: 280px;">플래그 (FLAG)</th>
+                        <th style="width: 140px;">발견 시각</th>
+                        <th style="width: 90px; text-align: center;">작업</th>
+                    </tr>
+                </thead>
+                <tbody id="vulnTableBody">
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-sub); padding: 40px;">
+                            데이터를 불러오는 중입니다...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let allVulns = [];
+        let currentFilter = 'ALL';
+
+        async function loadScoreboard() {
+            try {
+                const res = await fetch('/api/scoreboard');
+                const data = await res.json();
+
+                document.getElementById('foundCount').innerText = data.foundCount;
+                document.getElementById('totalCount').innerText = data.totalVulnerabilities;
+                document.getElementById('percentText').innerText = `(${data.progressPercent}%)`;
+                document.getElementById('progressBar').style.width = `${data.progressPercent}%`;
+
+                allVulns = data.vulnerabilities || [];
+                renderTable();
+            } catch (err) {
+                console.error('Failed to load scoreboard:', err);
+                showToast('❌ 스코어보드 정보를 불러오지 못했습니다.');
+            }
+        }
+
+        function filterCategory(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.filter-chip').forEach(el => {
+                if (el.innerText.includes(cat) || (cat === 'ALL' && el.innerText.includes('전체'))) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('vulnTableBody');
+            const filtered = currentFilter === 'ALL' 
+                ? allVulns 
+                : allVulns.filter(v => v.category === currentFilter);
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 30px; color: var(--text-sub);">해당 카테고리의 취약점이 없습니다.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(v => {
+                const isFound = v.found;
+                const statusBadge = isFound
+                    ? `<span class="status-pill status-solved">● SOLVED</span>`
+                    : `<span class="status-pill status-unsolved">○ LOCKED</span>`;
+
+                const flagDisplay = isFound
+                    ? `<div class="flag-box">
+                         <span>${v.flag}</span>
+                         <button class="copy-btn" onclick="copyText('${v.flag}')" title="복사">📋</button>
+                       </div>`
+                    : `<span style="color: var(--text-sub); font-family: monospace;">FLAG{????????????????}</span>`;
+
+                const foundTime = isFound && v.foundAt ? v.foundAt : '-';
+
+                return `
+                    <tr>
+                        <td style="color: var(--text-sub); font-family: monospace;">${v.id}</td>
+                        <td><span style="font-family: monospace; font-size: 0.8rem; color: var(--accent-cyan);">${v.wstgId}</span></td>
+                        <td><span class="badge badge-${v.category}">${v.category}</span></td>
+                        <td style="font-weight: 600;">${v.name}</td>
+                        <td>${statusBadge}</td>
+                        <td>${flagDisplay}</td>
+                        <td style="color: var(--text-sub); font-size: 0.82rem;">${foundTime}</td>
+                        <td style="text-align: center;">
+                            <button class="action-btn" onclick="triggerVuln('${v.wstgId}', '${v.name}')">검증</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function triggerVuln(wstgId, name) {
+            // 수동 트리거 및 자동 안내
+            showToast(`💡 [${wstgId}] ${name}을(를) WALKTHROUGH.md 가이드에 따라 공격 테스트해보세요!`);
+        }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('📋 플래그가 클립보드에 복사되었습니다: ' + text);
+            });
+        }
+
+        async function confirmReset() {
+            if (!confirm('정말로 모든 취약점 발견 기록 및 플래그를 초기화하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/scoreboard/reset', { method: 'POST' });
+                const data = await res.json();
+                showToast('🗑️ 스코어보드가 초기화되었습니다.');
+                loadScoreboard();
+            } catch (err) {
+                showToast('초기화 실패: ' + err);
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3500);
+        }
+
+        // 초기 로딩 및 주기적 갱신 (10초마다)
+        loadScoreboard();
+        setInterval(loadScoreboard, 10000);
+    </script>
+</body>
+</html>

@@ -24,11 +24,14 @@ public class CartController {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
 
-    public CartController(CartRepository cartRepository, ProductRepository productRepository, UserRepository userRepository) {
+    public CartController(CartRepository cartRepository, ProductRepository productRepository,
+                          UserRepository userRepository, com.vulnmall.service.ScoreboardService scoreboardService) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.scoreboardService = scoreboardService;
     }
 
     private Long getCurrentUserId() {
@@ -68,12 +71,23 @@ public class CartController {
         Optional<Product> prodOpt = productRepository.findById(request.getProductId());
         if (prodOpt.isEmpty()) return ResponseEntity.badRequest().body(Map.of("message", "상품이 존재하지 않습니다."));
 
+        String flag = null;
+        if (request.getUnitPrice() != null && request.getUnitPrice().compareTo(prodOpt.get().getPrice()) != 0) {
+            flag = scoreboardService.markFound("PRICE_TAMPER");
+        }
+
         // 클라이언트가 임의의 가격(unitPrice)을 넘기면 DB 실제 가격 대신 해당 가격을 그대로 채택
         BigDecimal priceToUse = (request.getUnitPrice() != null) ? request.getUnitPrice() : prodOpt.get().getPrice();
         int qty = (request.getQuantity() != null) ? request.getQuantity() : 1;
 
         cartRepository.addItem(userId, request.getProductId(), qty, priceToUse);
-        return ResponseEntity.ok(Map.of("message", "장바구니에 상품을 담았습니다."));
+        Map<String, Object> resp = new java.util.HashMap<>(Map.of("message", "장바구니에 상품을 담았습니다."));
+        var res = ResponseEntity.ok();
+        if (flag != null) {
+            resp.put("flag", flag);
+            res.header("X-Vuln-Flag", flag);
+        }
+        return res.body(resp);
     }
 
     /**
@@ -86,9 +100,20 @@ public class CartController {
         Long userId = getCurrentUserId();
         if (userId == null) return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
 
+        String flag = null;
+        if (request.getQuantity() != null && request.getQuantity() < 0) {
+            flag = scoreboardService.markFound("NEG_QUANTITY");
+        }
+
         // 유효성 검사 누락 (0 미만의 음수 수량 통과)
         cartRepository.updateQuantity(cartItemId, request.getQuantity());
-        return ResponseEntity.ok(Map.of("message", "수량이 변경되었습니다."));
+        Map<String, Object> resp = new java.util.HashMap<>(Map.of("message", "수량이 변경되었습니다."));
+        var res = ResponseEntity.ok();
+        if (flag != null) {
+            resp.put("flag", flag);
+            res.header("X-Vuln-Flag", flag);
+        }
+        return res.body(resp);
     }
 
     @DeleteMapping("/delete/{id}")

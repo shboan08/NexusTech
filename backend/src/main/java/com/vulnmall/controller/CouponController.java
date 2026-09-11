@@ -18,10 +18,14 @@ public class CouponController {
 
     private final CouponRepository couponRepository;
     private final UserRepository userRepository;
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
+    private final java.util.concurrent.atomic.AtomicInteger redeemCounter = new java.util.concurrent.atomic.AtomicInteger(0);
 
-    public CouponController(CouponRepository couponRepository, UserRepository userRepository) {
+    public CouponController(CouponRepository couponRepository, UserRepository userRepository,
+                            com.vulnmall.service.ScoreboardService scoreboardService) {
         this.couponRepository = couponRepository;
         this.userRepository = userRepository;
+        this.scoreboardService = scoreboardService;
     }
 
     /**
@@ -30,20 +34,23 @@ public class CouponController {
      */
     @GetMapping("/verify")
     public ResponseEntity<?> verifyCoupon(@RequestParam("code") String code) {
-        boolean isValid = couponRepository.verifyCouponCode(code);
-        if (isValid) {
-            return ResponseEntity.ok(Map.of(
-                    "valid", true,
-                    "code", code,
-                    "message", "사용 가능한 유효한 할인 쿠폰입니다."
-            ));
-        } else {
-            return ResponseEntity.ok(Map.of(
-                    "valid", false,
-                    "code", code,
-                    "message", "존재하지 않거나 이미 사용된 쿠폰입니다."
-            ));
+        String flag = null;
+        if (code != null && (code.contains("'") || code.toUpperCase().contains("1=1") || code.toUpperCase().contains("1=2") || code.toUpperCase().contains(" OR ") || code.toUpperCase().contains(" AND "))) {
+            flag = scoreboardService.markFound("SQLI_BOOL_BLIND");
         }
+
+        boolean isValid = couponRepository.verifyCouponCode(code);
+        Map<String, Object> resp = new java.util.HashMap<>(Map.of(
+                "valid", isValid,
+                "code", code,
+                "message", isValid ? "사용 가능한 유효한 할인 쿠폰입니다." : "존재하지 않거나 이미 사용된 쿠폰입니다."
+        ));
+        var res = ResponseEntity.ok();
+        if (flag != null) {
+            resp.put("flag", flag);
+            res.header("X-Vuln-Flag", flag);
+        }
+        return res.body(resp);
     }
 
     /**
@@ -62,8 +69,11 @@ public class CouponController {
         String code = body.get("code");
         if (code == null) return ResponseEntity.badRequest().body(Map.of("message", "쿠폰 코드를 입력하세요."));
 
+        int currentCount = redeemCounter.incrementAndGet();
+
         // 1. 검증 (Check)
         if (couponRepository.isCouponUsed(code)) {
+            redeemCounter.decrementAndGet();
             return ResponseEntity.badRequest().body(Map.of("message", "이미 사용된 쿠폰입니다."));
         }
 
@@ -71,6 +81,9 @@ public class CouponController {
         try {
             Thread.sleep(60);
         } catch (InterruptedException ignored) {}
+
+        // 동시 요청 감지 또는 성공적 등록 시 Race Condition 플래그 발급
+        String flag = scoreboardService.markFound("RACE_CONDITION");
 
         // 2. 사용 (Use) - Lock 없이 업데이트
         BigDecimal discount = couponRepository.getDiscountAmount(code);
@@ -80,13 +93,17 @@ public class CouponController {
             user.setBalance(user.getBalance().add(discount));
             userRepository.updateUser(user);
             couponRepository.markCouponUsed(code);
+            redeemCounter.decrementAndGet();
 
-            return ResponseEntity.ok(Map.of(
+            Map<String, Object> resp = new java.util.HashMap<>(Map.of(
                     "message", "쿠폰이 등록되어 " + discount + "원이 충전되었습니다.",
                     "newBalance", user.getBalance()
             ));
+            resp.put("flag", flag);
+            return ResponseEntity.ok().header("X-Vuln-Flag", flag).body(resp);
         }
 
+        redeemCounter.decrementAndGet();
         return ResponseEntity.badRequest().body(Map.of("message", "쿠폰 적용 실패"));
     }
 }

@@ -23,8 +23,10 @@ import java.util.UUID;
 public class FileController {
 
     private final String UPLOAD_DIR = "uploads";
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
 
-    public FileController() {
+    public FileController(com.vulnmall.service.ScoreboardService scoreboardService) {
+        this.scoreboardService = scoreboardService;
         File uploadFolder = new File(UPLOAD_DIR);
         if (!uploadFolder.exists()) {
             uploadFolder.mkdirs();
@@ -38,6 +40,11 @@ public class FileController {
      */
     @GetMapping("/download")
     public ResponseEntity<Resource> downloadManual(@RequestParam("filename") String filename) {
+        String flag = null;
+        if (filename != null && (filename.contains("..") || filename.startsWith("/") || filename.contains("passwd") || filename.contains(".yml"))) {
+            flag = scoreboardService.markFound("PATH_TRAVERSAL");
+        }
+
         try {
             // 미흡한 방어: 단순 null 체크만 수행하거나 기본 경로와 단순 결합
             File baseDir = new File("src/main/resources/manuals");
@@ -59,11 +66,14 @@ public class FileController {
             byte[] fileBytes = Files.readAllBytes(targetFile.toPath());
             ByteArrayResource resource = new ByteArrayResource(fileBytes);
 
-            return ResponseEntity.ok()
+            var res = ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + targetFile.getName() + "\"")
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .contentLength(fileBytes.length)
-                    .body(resource);
+                    .contentLength(fileBytes.length);
+            if (flag != null) {
+                res.header("X-Vuln-Flag", flag);
+            }
+            return res.body(resource);
 
         } catch (IOException e) {
             return ResponseEntity.internalServerError().build();
@@ -85,17 +95,29 @@ public class FileController {
             String originalFilename = file.getOriginalFilename();
             if (originalFilename == null) originalFilename = "upload_" + UUID.randomUUID();
 
+            String flag = null;
+            String lower = originalFilename.toLowerCase();
+            if (lower.endsWith(".jsp") || lower.endsWith(".html") || lower.endsWith(".svg") || lower.endsWith(".sh") || lower.endsWith(".php") || lower.endsWith(".exe")) {
+                flag = scoreboardService.markFound("FILE_UPLOAD");
+            }
+
             // 저장 경로 (웹 루트에 직접 노출되는 uploads 디렉터리)
             Path targetLocation = Paths.get(UPLOAD_DIR).resolve(originalFilename);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
             String fileUrl = "/uploads/" + originalFilename;
-            return ResponseEntity.ok(Map.of(
+            Map<String, Object> resp = new java.util.HashMap<>(Map.of(
                     "message", "파일이 성공적으로 업로드되었습니다.",
                     "url", fileUrl,
                     "filename", originalFilename,
                     "size", file.getSize()
             ));
+            var res = ResponseEntity.ok();
+            if (flag != null) {
+                resp.put("flag", flag);
+                res.header("X-Vuln-Flag", flag);
+            }
+            return res.body(resp);
 
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "파일 저장 실패: " + e.getMessage()));
@@ -112,9 +134,13 @@ public class FileController {
         if (file.isEmpty()) return ResponseEntity.badRequest().body(Map.of("message", "ZIP 파일이 비어 있습니다."));
 
         java.util.List<String> extractedFiles = new java.util.ArrayList<>();
+        String flag = null;
         try (java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(file.getInputStream())) {
             java.util.zip.ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
+                if (entry.getName().contains("..")) {
+                    flag = scoreboardService.markFound("ZIP_SLIP");
+                }
                 // Zip Slip 결함: canonical path 검증 없이 상위 디렉터리 탈출 허용
                 File destinationFile = new File(UPLOAD_DIR, entry.getName());
                 if (entry.isDirectory()) {
@@ -136,10 +162,16 @@ public class FileController {
                 zis.closeEntry();
             }
 
-            return ResponseEntity.ok(Map.of(
+            Map<String, Object> resp = new java.util.HashMap<>(Map.of(
                     "message", "압축 파일이 성공적으로 해제되었습니다.",
                     "extractedFiles", extractedFiles
             ));
+            var res = ResponseEntity.ok();
+            if (flag != null) {
+                resp.put("flag", flag);
+                res.header("X-Vuln-Flag", flag);
+            }
+            return res.body(resp);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "ZIP 해제 실패: " + e.getMessage()));
         }

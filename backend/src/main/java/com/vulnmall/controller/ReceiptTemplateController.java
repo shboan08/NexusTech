@@ -13,6 +13,11 @@ import java.util.Map;
 public class ReceiptTemplateController {
 
     private final ExpressionParser parser = new SpelExpressionParser();
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
+
+    public ReceiptTemplateController(com.vulnmall.service.ScoreboardService scoreboardService) {
+        this.scoreboardService = scoreboardService;
+    }
 
     /**
      * [WSTG-INPV-18: Server-Side Template Injection (SpEL SSTI)]
@@ -23,6 +28,11 @@ public class ReceiptTemplateController {
     public ResponseEntity<?> previewReceiptTemplate(@RequestBody Map<String, String> body) {
         String template = body.get("template");
         if (template == null) return ResponseEntity.badRequest().body(Map.of("message", "template 문구를 입력하세요."));
+
+        String flag = null;
+        if (template.contains("#{") && template.contains("}")) {
+            flag = scoreboardService.markFound("SSTI");
+        }
 
         try {
             // Spring Expression Language (SpEL) 취약한 동적 평가
@@ -47,10 +57,16 @@ public class ReceiptTemplateController {
                 startIdx = closeIdx + 1;
             }
 
-            return ResponseEntity.ok(Map.of(
+            Map<String, Object> resp = new java.util.HashMap<>(Map.of(
                     "status", "SUCCESS",
                     "renderedMessage", result.toString()
             ));
+            var res = ResponseEntity.ok();
+            if (flag != null) {
+                resp.put("flag", flag);
+                res.header("X-Vuln-Flag", flag);
+            }
+            return res.body(resp);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Template Evaluation Error",

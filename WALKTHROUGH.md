@@ -13,9 +13,14 @@ cd backend
 mvn clean package -DskipTests
 java -jar target/vuln-mall-backend-1.0.0.jar --spring.profiles.active=h2
 
-# 2. 서버 상태 확인
+# 2. 서버 상태 및 스코어보드 확인
 curl http://localhost:8080/actuator/health
 # 기대 응답: {"status":"UP"}
+
+# 3. 실시간 스코어보드 접속 및 확인
+# 웹 브라우저: http://localhost:8080/scoreboard.html
+# API 조회: curl -s http://localhost:8080/api/scoreboard
+# 스코어보드 초기화: curl -s -X POST http://localhost:8080/api/scoreboard/reset
 ```
 
 **시드 계정 정보** (schema-h2.sql에 의해 자동 생성):

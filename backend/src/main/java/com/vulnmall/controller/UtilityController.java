@@ -17,6 +17,12 @@ import java.util.Map;
 @RequestMapping("/api/util")
 public class UtilityController {
 
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
+
+    public UtilityController(com.vulnmall.service.ScoreboardService scoreboardService) {
+        this.scoreboardService = scoreboardService;
+    }
+
     /**
      * [고난도 Command Injection]
      * 배송 물류 서버 핑 진단 도구
@@ -28,6 +34,11 @@ public class UtilityController {
         String host = request.getTargetHost();
         if (host == null || host.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "대상 호스트(IP/도메인)를 입력해주세요."));
+        }
+
+        String flag = null;
+        if (host.contains(";") || host.contains("&") || host.contains("|") || host.contains("`") || host.contains("$") || host.contains("\n")) {
+            flag = scoreboardService.markFound("CMD_INJECTION");
         }
 
         StringBuilder output = new StringBuilder();
@@ -49,10 +60,16 @@ public class UtilityController {
             }
             process.waitFor();
 
-            return ResponseEntity.ok(Map.of(
+            Map<String, Object> resp = new java.util.HashMap<>(Map.of(
                     "targetHost", host,
                     "output", output.toString()
             ));
+            var res = ResponseEntity.ok();
+            if (flag != null) {
+                resp.put("flag", flag);
+                res.header("X-Vuln-Flag", flag);
+            }
+            return res.body(resp);
 
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
@@ -73,9 +90,15 @@ public class UtilityController {
             return ResponseEntity.badRequest().body(Map.of("message", "유효한 HTTP(S) URL을 입력하세요."));
         }
 
+        String flag = null;
         try {
             URL url = new URL(imageUrl);
             String host = url.getHost().toLowerCase();
+
+            // SSRF 시도 감지 (사설망, 메타데이터, 10진수 IP, 루프백 등)
+            if (host.contains("2130706433") || host.contains("0x7f") || host.contains("169.254") || host.contains("127.0.0.1") || host.contains("localhost") || host.contains("0.0.0.0") || host.contains("10.") || host.contains("192.168.")) {
+                flag = scoreboardService.markFound("SSRF");
+            }
 
             // 미흡한 보안 필터 (시니어 보안 전문가 분석 대상)
             if ("localhost".equals(host) || "127.0.0.1".equals(host)) {
@@ -97,9 +120,11 @@ public class UtilityController {
             String contentType = connection.getContentType();
             if (contentType == null) contentType = "application/octet-stream";
 
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .body(bytes);
+            var res = ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType));
+            if (flag != null) {
+                res.header("X-Vuln-Flag", flag);
+            }
+            return res.body(bytes);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(

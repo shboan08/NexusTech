@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,10 +20,13 @@ public class ReviewController {
 
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
 
-    public ReviewController(ReviewRepository reviewRepository, UserRepository userRepository) {
+    public ReviewController(ReviewRepository reviewRepository, UserRepository userRepository,
+                            com.vulnmall.service.ScoreboardService scoreboardService) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
+        this.scoreboardService = scoreboardService;
     }
 
     private User getCurrentUser() {
@@ -47,6 +51,15 @@ public class ReviewController {
             return ResponseEntity.badRequest().body(Map.of("message", "필수 항목이 누락되었습니다."));
         }
 
+        String flag = null;
+        String comment = request.getComment();
+        if (comment != null) {
+            String commentUpper = comment.toUpperCase();
+            if (commentUpper.contains("<SCRIPT") || commentUpper.contains("<IMG") || commentUpper.contains("ONERROR=") || commentUpper.contains("<SVG") || commentUpper.contains("JAVASCRIPT:")) {
+                flag = scoreboardService.markFound("XSS_STORED_REVIEW");
+            }
+        }
+
         reviewRepository.addReview(
                 request.getProductId(),
                 user.getId(),
@@ -56,7 +69,13 @@ public class ReviewController {
                 request.getImagePath()
         );
 
-        return ResponseEntity.ok(Map.of("message", "리뷰가 성공적으로 등록되었습니다."));
+        Map<String, Object> resp = new HashMap<>(Map.of("message", "리뷰가 성공적으로 등록되었습니다."));
+        var resBuilder = ResponseEntity.ok();
+        if (flag != null) {
+            resp.put("flag", flag);
+            resBuilder.header("X-Vuln-Flag", flag);
+        }
+        return resBuilder.body(resp);
     }
 
     @GetMapping("/product/{productId}")

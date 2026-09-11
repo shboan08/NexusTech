@@ -14,8 +14,10 @@ public class JwtTokenProvider {
 
     private final KeyPair rsaKeyPair;
     private final String publicKeyPem;
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
 
-    public JwtTokenProvider() {
+    public JwtTokenProvider(@org.springframework.context.annotation.Lazy com.vulnmall.service.ScoreboardService scoreboardService) {
+        this.scoreboardService = scoreboardService;
         try {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
             generator.initialize(2048);
@@ -69,6 +71,9 @@ public class JwtTokenProvider {
 
             // alg 헤더에 따른 취약한 키 해석
             if (headerJson.contains("\"alg\":\"HS256\"") || headerJson.contains("\"alg\": \"HS256\"")) {
+                if (scoreboardService != null) {
+                    scoreboardService.markFound("JWT_CONFUSION");
+                }
                 // Key Confusion: 공개키 PEM 문자열의 바이트를 대칭키(HMAC)로 간주하여 검증
                 byte[] hmacKeyBytes = publicKeyPem.getBytes();
                 SecretKey hmacKey = Keys.hmacShaKeyFor(hmacKeyBytes);

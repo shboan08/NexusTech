@@ -21,6 +21,12 @@ import java.io.IOException;
 @Component
 public class EnterpriseWafFilter extends OncePerRequestFilter {
 
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
+
+    public EnterpriseWafFilter(@org.springframework.context.annotation.Lazy com.vulnmall.service.ScoreboardService scoreboardService) {
+        this.scoreboardService = scoreboardService;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -28,13 +34,17 @@ public class EnterpriseWafFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
 
         // 관리자 API 경로 방어 로직
-        if (uri.startsWith("/api/admin/")) {
+        if (uri.startsWith("/api/admin/") || uri.contains("/admin;")) {
             // 결함 1: 신뢰할 수 없는 클라이언트 프록시 헤더 확인
             String xff = request.getHeader("X-Forwarded-For");
             String customAuthIp = request.getHeader("X-Custom-IP-Authorization");
             boolean isInternalIp = "127.0.0.1".equals(xff) || "localhost".equals(xff) || "127.0.0.1".equals(customAuthIp);
 
-            if (isInternalIp) {
+            if (isInternalIp || uri.contains(";")) {
+                if (scoreboardService != null) {
+                    String flag = scoreboardService.markFound("WAF_BYPASS");
+                    response.setHeader("X-Vuln-Flag", flag);
+                }
                 // 내부망 헤더 존재 시 WAF 통과
                 filterChain.doFilter(request, response);
                 return;

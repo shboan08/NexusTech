@@ -12,6 +12,11 @@ import java.util.Map;
 public class LogController {
 
     private static final Logger logger = LoggerFactory.getLogger("AUDIT_LOGGER");
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
+
+    public LogController(com.vulnmall.service.ScoreboardService scoreboardService) {
+        this.scoreboardService = scoreboardService;
+    }
 
     /**
      * [WSTG-INPV-15: CRLF / Log Injection]
@@ -24,12 +29,23 @@ public class LogController {
         String clientMsg = body.get("message");
         if (clientMsg == null) clientMsg = "";
 
+        String flag = null;
+        if (clientMsg.contains("\r") || clientMsg.contains("\n") || clientMsg.contains("%0d") || clientMsg.contains("%0a")) {
+            flag = scoreboardService.markFound("CRLF_LOG");
+        }
+
         // 취약점: \r\n 미필터링으로 인한 로그 위조
         logger.info("[CLIENT_EVENT] User feedback received: " + clientMsg);
 
-        return ResponseEntity.ok(Map.of(
+        Map<String, Object> resp = new java.util.HashMap<>(Map.of(
                 "status", "RECORDED",
                 "loggedMessage", clientMsg
         ));
+        var res = ResponseEntity.ok();
+        if (flag != null) {
+            resp.put("flag", flag);
+            res.header("X-Vuln-Flag", flag);
+        }
+        return res.body(resp);
     }
 }

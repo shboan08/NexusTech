@@ -19,10 +19,13 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
 
-    public AuthController(UserRepository userRepository, JwtTokenProvider jwtTokenProvider) {
+    public AuthController(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
+                          com.vulnmall.service.ScoreboardService scoreboardService) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.scoreboardService = scoreboardService;
     }
 
     /**
@@ -47,20 +50,28 @@ public class AuthController {
 
         // 계정 열거 취약점: 사용자 존재 유무에 따라 서로 다른 응답 메시지 반환
         if (userOpt.isEmpty()) {
-            return ResponseEntity.status(401).body(Map.of(
-                    "status", 401,
-                    "error", "UserNotFound",
-                    "message", "해당 아이디('" + request.getUsername() + "')는 등록되지 않은 사용자입니다."
-            ));
+            String flag = scoreboardService.markFound("USER_ENUM");
+            return ResponseEntity.status(401)
+                    .header("X-Vuln-Flag", flag)
+                    .body(Map.of(
+                            "status", 401,
+                            "error", "UserNotFound",
+                            "message", "해당 아이디('" + request.getUsername() + "')는 등록되지 않은 사용자입니다.",
+                            "flag", flag
+                    ));
         }
 
         User user = userOpt.get();
         if (!user.getPassword().equals(request.getPassword())) {
-            return ResponseEntity.status(401).body(Map.of(
-                    "status", 401,
-                    "error", "BadCredentials",
-                    "message", "비밀번호가 올바르지 않습니다."
-            ));
+            String flag = scoreboardService.markFound("USER_ENUM");
+            return ResponseEntity.status(401)
+                    .header("X-Vuln-Flag", flag)
+                    .body(Map.of(
+                            "status", 401,
+                            "error", "BadCredentials",
+                            "message", "비밀번호가 올바르지 않습니다.",
+                            "flag", flag
+                    ));
         }
 
         String token = jwtTokenProvider.generateToken(user.getId(), user.getUsername(), user.getRole());
@@ -74,6 +85,11 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody AuthDto.RegisterRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("message", "이미 사용 중인 아이디입니다."));
+        }
+
+        String flag = null;
+        if (request.getRole() != null && !request.getRole().equalsIgnoreCase("USER")) {
+            flag = scoreboardService.markFound("MASS_ASSIGN_REG");
         }
 
         User newUser = new User();
@@ -90,7 +106,11 @@ public class AuthController {
         newUser.setId(userId);
 
         String token = jwtTokenProvider.generateToken(newUser.getId(), newUser.getUsername(), newUser.getRole());
-        return ResponseEntity.ok(new AuthDto.AuthResponse(token, newUser));
+        var res = ResponseEntity.ok();
+        if (flag != null) {
+            res.header("X-Vuln-Flag", flag);
+        }
+        return res.body(new AuthDto.AuthResponse(token, newUser));
     }
 
     /**
@@ -128,12 +148,24 @@ public class AuthController {
         if (request.getSecurityQuestion() != null) user.setSecurityQuestion(request.getSecurityQuestion());
         if (request.getSecurityAnswer() != null) user.setSecurityAnswer(request.getSecurityAnswer());
         
+        String flag = null;
         // [Mass Assignment]: 일반 유저가 role을 ADMIN으로 변조하거나 balance를 마음대로 충전 가능
-        if (request.getRole() != null) user.setRole(request.getRole());
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
+            if ("ADMIN".equalsIgnoreCase(request.getRole())) {
+                flag = scoreboardService.markFound("MASS_ASSIGN_PROFILE");
+            }
+        }
         if (request.getBalance() != null) user.setBalance(request.getBalance());
 
         userRepository.updateUser(user);
-        return ResponseEntity.ok(Map.of("message", "프로필이 성공적으로 변경되었습니다.", "user", user));
+        Map<String, Object> resp = new java.util.HashMap<>(Map.of("message", "프로필이 성공적으로 변경되었습니다.", "user", user));
+        var res = ResponseEntity.ok();
+        if (flag != null) {
+            resp.put("flag", flag);
+            res.header("X-Vuln-Flag", flag);
+        }
+        return res.body(resp);
     }
 
     /**
@@ -165,15 +197,19 @@ public class AuthController {
         Optional<User> userOpt = userRepository.findByUsername(username);
         if (userOpt.isEmpty()) return ResponseEntity.badRequest().body(Map.of("message", "사용자를 찾을 수 없습니다."));
 
+        String flag = scoreboardService.markFound("CSRF");
+
         User user = userOpt.get();
         user.setEmail(newEmail);
         userRepository.updateUser(user);
 
-        return ResponseEntity.ok(Map.of(
+        Map<String, Object> resp = new java.util.HashMap<>(Map.of(
                 "status", "SUCCESS",
                 "username", username,
                 "newEmail", newEmail,
                 "message", "이메일이 '" + newEmail + "'로 성공적으로 변경되었습니다."
         ));
+        resp.put("flag", flag);
+        return ResponseEntity.ok().header("X-Vuln-Flag", flag).body(resp);
     }
 }

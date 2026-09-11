@@ -32,11 +32,14 @@ public class OrderController {
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
+    private final com.vulnmall.service.ScoreboardService scoreboardService;
 
-    public OrderController(OrderRepository orderRepository, CartRepository cartRepository, UserRepository userRepository) {
+    public OrderController(OrderRepository orderRepository, CartRepository cartRepository,
+                           UserRepository userRepository, com.vulnmall.service.ScoreboardService scoreboardService) {
         this.orderRepository = orderRepository;
         this.cartRepository = cartRepository;
         this.userRepository = userRepository;
+        this.scoreboardService = scoreboardService;
     }
 
     private User getCurrentUser() {
@@ -124,7 +127,17 @@ public class OrderController {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(orderOpt.get());
+        Order order = orderOpt.get();
+        String flag = null;
+        if (!order.getUserId().equals(user.getId())) {
+            flag = scoreboardService.markFound("BOLA_READ");
+        }
+
+        var res = ResponseEntity.ok();
+        if (flag != null) {
+            res.header("X-Vuln-Flag", flag);
+        }
+        return res.body(order);
     }
 
     /**
@@ -139,9 +152,21 @@ public class OrderController {
         Optional<Order> orderOpt = orderRepository.findById(id);
         if (orderOpt.isEmpty()) return ResponseEntity.notFound().build();
 
+        Order order = orderOpt.get();
+        String flag = null;
+        if (!order.getUserId().equals(user.getId())) {
+            flag = scoreboardService.markFound("BOLA_WRITE");
+        }
+
         // 소유자 확인 없이 변경 실행
         orderRepository.updateShippingInfo(id, request.getShippingAddress(), request.getRecipientName(), request.getPhone());
-        return ResponseEntity.ok(Map.of("message", "배송 정보가 성공적으로 변경되었습니다.", "orderId", id));
+        Map<String, Object> resp = new HashMap<>(Map.of("message", "배송 정보가 성공적으로 변경되었습니다.", "orderId", id));
+        var res = ResponseEntity.ok();
+        if (flag != null) {
+            resp.put("flag", flag);
+            res.header("X-Vuln-Flag", flag);
+        }
+        return res.body(resp);
     }
 
     /**
@@ -151,6 +176,11 @@ public class OrderController {
      */
     @PostMapping("/xml-receipt")
     public ResponseEntity<?> parseXmlReceipt(@RequestBody OrderDto.XmlReceiptRequest request) {
+        String flag = null;
+        if (request.getXmlData() != null && (request.getXmlData().contains("<!ENTITY") || request.getXmlData().contains("SYSTEM"))) {
+            flag = scoreboardService.markFound("XXE");
+        }
+
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             // 취약점: 보안 기능(Disallow Doctype / External Entities)을 비활성화하지 않음
@@ -168,7 +198,12 @@ public class OrderController {
             result.put("status", "SUCCESS");
             result.put("receiptTitle", title);
             result.put("customMemo", memo);
-            return ResponseEntity.ok(result);
+            var res = ResponseEntity.ok();
+            if (flag != null) {
+                result.put("flag", flag);
+                res.header("X-Vuln-Flag", flag);
+            }
+            return res.body(result);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -185,11 +220,20 @@ public class OrderController {
      */
     @GetMapping("/track")
     public ResponseEntity<?> trackOrder(@RequestParam("code") String code) {
+        String flag = null;
+        if (code != null && (code.toUpperCase().contains("SLEEP") || code.toUpperCase().contains("WAITFOR") || code.contains("'"))) {
+            flag = scoreboardService.markFound("SQLI_TIME_BLIND");
+        }
+
         List<Order> orders = orderRepository.trackOrderByCode(code);
         if (orders.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(orders.get(0));
+        var res = ResponseEntity.ok();
+        if (flag != null) {
+            res.header("X-Vuln-Flag", flag);
+        }
+        return res.body(orders.get(0));
     }
 
     /**
@@ -202,12 +246,16 @@ public class OrderController {
         Optional<Order> orderOpt = orderRepository.findById(orderId);
         if (orderOpt.isEmpty()) return ResponseEntity.notFound().build();
 
+        String flag = scoreboardService.markFound("WORKFLOW_SKIP");
         orderRepository.updateStatus(orderId, "PAID");
-        return ResponseEntity.ok(Map.of(
+
+        Map<String, Object> resp = new HashMap<>(Map.of(
                 "orderId", orderId,
                 "status", "PAID",
                 "message", "주문이 결제 확인 완료 상태로 변경되었습니다."
         ));
+        resp.put("flag", flag);
+        return ResponseEntity.ok().header("X-Vuln-Flag", flag).body(resp);
     }
 
     /**
@@ -221,14 +269,25 @@ public class OrderController {
         Optional<Order> orderOpt = orderRepository.findById(orderId);
         if (orderOpt.isEmpty()) return ResponseEntity.notFound().build();
 
+        String flag = null;
+        if (statuses.size() > 1) {
+            flag = scoreboardService.markFound("HPP");
+        }
+
         String effectiveStatus = statuses.get(statuses.size() - 1);
         orderRepository.updateStatus(orderId, effectiveStatus);
 
-        return ResponseEntity.ok(Map.of(
+        Map<String, Object> resp = new HashMap<>(Map.of(
                 "orderId", orderId,
                 "receivedStatuses", statuses,
                 "appliedStatus", effectiveStatus,
                 "message", "HPP 파라미터 오염을 통해 최종 상태 '" + effectiveStatus + "'가 적용되었습니다."
         ));
+        var res = ResponseEntity.ok();
+        if (flag != null) {
+            resp.put("flag", flag);
+            res.header("X-Vuln-Flag", flag);
+        }
+        return res.body(resp);
     }
 }

@@ -54,6 +54,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(Collections.singletonList("*"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "X-Forwarded-For", "X-Custom-IP-Authorization"));
+        config.setExposedHeaders(Arrays.asList("X-Vuln-Flag", "Authorization"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
