@@ -225,7 +225,7 @@
         <!-- Sidebar Navigation -->
         <aside class="admin-sidebar">
             <div class="admin-brand">
-                <span class="logo-icon" style="font-size: 1.6rem;">🛡️</span>
+                <span class="logo-icon" style="font-size: 1.6rem;">ADMIN</span>
                 <div>
                     <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan);">NEXUS ADMIN</h3>
                     <span style="font-size: 0.75rem; color: var(--text-muted);">MASTER CONTROL v2.6</span>
@@ -234,25 +234,25 @@
 
             <nav class="admin-nav">
                 <button class="admin-nav-btn active" onclick="adminApp.switchTab('metrics')">
-                    <span>📊</span> 통합 대시보드
+                    통합 대시보드
                 </button>
                 <button class="admin-nav-btn" onclick="adminApp.switchTab('products')">
-                    <span>📦</span> 상품 원장 관리
+                    상품 원장 관리
                 </button>
                 <button class="admin-nav-btn" onclick="adminApp.switchTab('users')">
-                    <span>👥</span> 회원 계정 관리
+                    회원 계정 관리
                 </button>
                 <button class="admin-nav-btn" onclick="adminApp.switchTab('orders')">
-                    <span>🛒</span> 전체 주문 내역
+                    전체 주문 내역
                 </button>
                 <button class="admin-nav-btn" onclick="adminApp.switchTab('addresses')">
-                    <span>📍</span> 고객 배송지 원장
+                    고객 배송지 원장
                 </button>
                 <button class="admin-nav-btn" onclick="adminApp.switchTab('inquiries')">
-                    <span>🎧</span> 1:1 지원 티켓 관리
+                    1:1 지원 티켓 관리
                 </button>
                 <button class="admin-nav-btn" onclick="adminApp.switchTab('system')">
-                    <span>⚡</span> 시스템 진단 & 도구
+                    시스템 진단 & 도구
                 </button>
             </nav>
 
@@ -261,7 +261,7 @@
                     접속 계정: <strong id="adminCurrentUser" style="color: var(--text-primary);">-</strong>
                 </div>
                 <a href="/" class="btn btn-outline btn-block btn-sm" style="text-align: center; text-decoration: none;">
-                    🏬 스토어로 이동
+                    스토어로 이동
                 </a>
                 <button class="btn btn-ghost btn-block btn-sm" onclick="adminApp.logout()">
                     로그아웃
@@ -273,7 +273,7 @@
         <main class="admin-main">
             <!-- WAF Bypass / Privilege Info Strip -->
             <div class="spoof-toolbar">
-                <span style="color: var(--accent-cyan); font-weight: 600;">🔒 엔터프라이즈 보안 게이트:</span>
+                <span style="color: var(--accent-cyan); font-weight: 600;">엔터프라이즈 보안 게이트:</span>
                 <span id="adminGateStatus" style="color: var(--color-success);">인가 상태 확인 완료 (ADMIN Role / Internal IP)</span>
                 <button class="btn btn-glass btn-sm" style="margin-left: auto;" onclick="adminApp.refreshCurrentTab()">새로고침</button>
             </div>
@@ -282,7 +282,7 @@
             <div class="tab-pane active" id="pane-metrics">
                 <div class="admin-header">
                     <div>
-                        <h1>📊 시스템 개요 및 실시간 메트릭</h1>
+                        <h1>시스템 개요 및 실시간 메트릭</h1>
                         <p class="text-muted">서버 가동 상태, JVM 메모리 사용률 및 쇼핑몰 전체 거래 현황</p>
                     </div>
                 </div>
@@ -322,7 +322,7 @@
             <div class="tab-pane" id="pane-products">
                 <div class="admin-header">
                     <div>
-                        <h1>📦 상품 원장 관리</h1>
+                        <h1>상품 원장 관리</h1>
                         <p class="text-muted">비공개(Secret) 익스플로잇 키트를 포함한 전체 카탈로그 등록 및 재고 조정</p>
                     </div>
                     <button class="btn btn-primary" onclick="adminApp.openNewProductModal()">+ 신규 상품 등록</button>
@@ -353,7 +353,7 @@
             <div class="tab-pane" id="pane-users">
                 <div class="admin-header">
                     <div>
-                        <h1>👥 회원 계정 및 권한 관리</h1>
+                        <h1>회원 계정 및 권한 관리</h1>
                         <p class="text-muted">전체 회원 보안 질의/응답, 평문 비밀번호 및 지갑 잔액 원격 조정</p>
                     </div>
                 </div>
@@ -384,7 +384,7 @@
             <div class="tab-pane" id="pane-orders">
                 <div class="admin-header">
                     <div>
-                        <h1>🛒 전체 주문 및 결제 내역</h1>
+                        <h1>전체 주문 및 결제 내역</h1>
                         <p class="text-muted">VIP 고객 배송지 정보, 연락처 및 주문 결제 승인 상태 강제 제어</p>
                     </div>
                 </div>
@@ -416,7 +416,7 @@
             <div class="tab-pane" id="pane-addresses">
                 <div class="admin-header">
                     <div>
-                        <h1>📍 고객 배송지 원장</h1>
+                        <h1>고객 배송지 원장</h1>
                         <p class="text-muted">전체 회원이 등록한 배송지 주소록 및 배송 요청 메모 원장</p>
                     </div>
                 </div>
@@ -448,7 +448,7 @@
             <div class="tab-pane" id="pane-inquiries">
                 <div class="admin-header">
                     <div>
-                        <h1>🎧 1:1 고객지원 헬프데스크 & 티켓 관리</h1>
+                        <h1>1:1 고객지원 헬프데스크 & 티켓 관리</h1>
                         <p class="text-muted">고객 문의, 제품 불량/파손 신고 증빙 검토 및 관리자 답변 작성</p>
                     </div>
                 </div>
@@ -479,7 +479,7 @@
             <div class="tab-pane" id="pane-system">
                 <div class="admin-header">
                     <div>
-                        <h1>⚡ 시스템 진단 콘솔 & 네트워크 도구</h1>
+                        <h1>시스템 진단 콘솔 & 네트워크 도구</h1>
                         <p class="text-muted">글로벌 물류 노드 연결성 점검 및 원격 시스템 진단 도구 (OS 커맨드 실행기)</p>
                     </div>
                 </div>
@@ -635,7 +635,7 @@
         <div class="modal-dialog modal-md">
             <button class="modal-close" onclick="adminApp.closeModal('adminReplyModal')">&times;</button>
             <div class="modal-header">
-                <h2>🎧 고객지원 티켓 답변 작성 및 종결</h2>
+                <h2>고객지원 티켓 답변 작성 및 종결</h2>
             </div>
             <div class="modal-body">
                 <form onsubmit="event.preventDefault(); adminApp.submitTicketReply();">
@@ -668,7 +668,7 @@
         <div class="modal-dialog modal-lg">
             <button class="modal-close no-print" onclick="adminApp.closeModal('adminReceiptModal')">&times;</button>
             <div class="modal-header no-print">
-                <h2>🧾 전자 세금계산서 / 영수증 원장 조회</h2>
+                <h2>전자 세금계산서 / 영수증 원장 조회</h2>
             </div>
             <div class="modal-body">
                 <div class="receipt-paper" id="adminReceiptArea" style="background:#fff; color:#1a1a1a; padding:28px; border-radius:8px;">
@@ -676,7 +676,7 @@
                 </div>
                 <div class="no-print mt-3" style="display:flex; justify-content:flex-end; gap:10px;">
                     <button type="button" class="btn btn-outline" onclick="adminApp.closeModal('adminReceiptModal')">닫기</button>
-                    <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ 인쇄하기</button>
+                    <button type="button" class="btn btn-primary" onclick="window.print()">인쇄하기</button>
                 </div>
             </div>
         </div>
@@ -704,7 +704,7 @@
                         document.getElementById('adminGateStatus').innerText = '관리자 세션 인가 승인됨 (' + res.role + ')';
                     }
                 } catch (e) {
-                    document.getElementById('adminGateStatus').innerHTML = '<span style="color:var(--color-danger);">⚠️ WAF 경고: 일반 세션 감지됨 (헤더 우회 모드 활용 가능)</span>';
+                    document.getElementById('adminGateStatus').innerHTML = '<span style="color:var(--color-danger);">[WAF 경고]: 일반 세션 감지됨 (헤더 우회 모드 활용 가능)</span>';
                 }
 
                 this.loadMetrics();
@@ -790,7 +790,7 @@
                             <td>${p.isHidden ? '<span class="status-badge badge-admin">SECRET 비공개</span>' : '<span class="status-badge badge-paid">공개 중</span>'}</td>
                             <td class="table-actions">
                                 <button class="btn btn-outline btn-sm" onclick='adminApp.openEditProductModal(${JSON.stringify(p).replace(/'/g, "&apos;")})'>수정</button>
-                                ${p.stock <= 0 ? `<button class="btn btn-primary btn-sm" style="background:#f59e0b; border-color:#f59e0b;" onclick="adminApp.triggerRestockNotify(${p.id})" title="등록된 웹훅으로 재입고 알림 즉시 발송">🔔 알림 발송</button>` : ''}
+                                ${p.stock <= 0 ? `<button class="btn btn-primary btn-sm" style="background:#f59e0b; border-color:#f59e0b;" onclick="adminApp.triggerRestockNotify(${p.id})" title="등록된 웹훅으로 재입고 알림 즉시 발송">알림 발송</button>` : ''}
                                 <button class="btn btn-ghost btn-sm text-danger" onclick="adminApp.deleteProduct(${p.id})">삭제</button>
                             </td>
                         </tr>
@@ -969,17 +969,17 @@
                             <td><span class="status-badge badge-${(o.status||'').toLowerCase()}">${o.status}</span></td>
                             <td style="font-size:0.82rem; max-width:260px;">
                                 ${isRefunded ? `
-                                    <div style="color:#ef4444; font-weight:700;">↩️ 환불: ₩${Number(o.refundAmount || o.totalAmount).toLocaleString()}</div>
+                                    <div style="color:#ef4444; font-weight:700;">[환불]: ₩${Number(o.refundAmount || o.totalAmount).toLocaleString()}</div>
                                     <!-- Stored XSS sink in Admin portal: innerHTML on unescaped refundReason -->
                                     <div style="color:var(--text-secondary); font-size:0.8rem; margin-top:2px;">사유: <span>${o.refundReason || '사유 없음'}</span></div>
                                 ` : isCancelled ? `
-                                    <span style="color:#94a3b8; font-weight:600;">🚫 주문 취소됨</span>
+                                    <span style="color:#94a3b8; font-weight:600;">[주문 취소됨]</span>
                                     ${o.refundReason ? `<div style="color:var(--text-secondary); font-size:0.8rem;">사유: <span>${o.refundReason}</span></div>` : ''}
                                 ` : '<span style="color:var(--text-muted);">-</span>'}
                             </td>
                             <td class="table-actions">
                                 <button class="btn btn-outline btn-sm" onclick="adminApp.openEditOrderStatus(${o.id})">상태/환불 관리</button>
-                                <button class="btn btn-glass btn-sm" onclick="adminApp.viewReceipt(${o.id})">🧾 영수증</button>
+                                <button class="btn btn-glass btn-sm" onclick="adminApp.viewReceipt(${o.id})">영수증</button>
                             </td>
                         </tr>
                     `;
@@ -1095,7 +1095,7 @@
                                 <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px; max-height:40px; overflow:hidden; text-overflow:ellipsis;">${inq.content}</div>
                             </td>
                             <td>
-                                ${inq.attachmentUrl ? `<a href="${inq.attachmentUrl}" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.75rem;">📎 첨부 열기</a>` : '<span style="color:var(--text-muted);">-</span>'}
+                                ${inq.attachmentUrl ? `<a href="${inq.attachmentUrl}" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.75rem;">첨부 열기</a>` : '<span style="color:var(--text-muted);">-</span>'}
                             </td>
                             <td>
                                 <span class="status-badge ${inq.status === 'RESOLVED' ? 'badge-paid' : 'badge-user'}">${inq.status || 'OPEN'}</span>

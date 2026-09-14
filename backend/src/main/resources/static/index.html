@@ -20,7 +20,7 @@
         <div class="nav-container">
             <div class="brand" onclick="app.resetFilter()">
                 <div class="brand-logo">
-                    <span class="logo-icon">⚡</span>
+                    <span class="logo-icon">N</span>
                 </div>
                 <div class="brand-text">
                     <span class="brand-title">NEXUS<span class="highlight">TECH</span></span>
@@ -45,20 +45,20 @@
 
                 <div class="nav-user-logged" id="navUserLogged" style="display:none;">
                     <div class="user-chip" onclick="app.openMyPageModal()">
-                        <span class="user-avatar" id="navUserAvatar">👤</span>
+                        <span class="user-avatar" id="navUserAvatar">USER</span>
                         <div class="user-meta">
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <span class="user-name" id="navUsername">User</span>
-                                <span class="vip-badge" id="navVipBadge" style="display:none;">👑 PRIME</span>
+                                <span class="vip-badge" id="navVipBadge" style="display:none;">PRIME</span>
                             </div>
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="user-balance" id="navUserBalance">₩0</span>
-                                <span class="points-pill" style="font-size:0.75rem; padding: 2px 8px; cursor:pointer;" onclick="event.stopPropagation(); app.openRouletteModal();" title="보유 포인트 및 출석/룰렛">🪙 <span id="navUserPoints">0</span> P</span>
+                                <span class="points-pill" style="font-size:0.75rem; padding: 2px 8px; cursor:pointer;" onclick="event.stopPropagation(); app.openRouletteModal();" title="보유 포인트 및 출석/룰렛"><span id="navUserPoints">0</span> P</span>
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn-outline btn-sm" onclick="app.openRouletteModal()" title="일일 출석체크 & 사이버 룰렛">🎡 출석/룰렛</button>
-                    <button class="btn nav-vip-btn btn-sm" onclick="app.openMembershipModal()" title="NEXUS PRIME VIP 멤버십">👑 PRIME</button>
+                    <button class="btn btn-outline btn-sm" onclick="app.openRouletteModal()" title="일일 출석체크 & 사이버 룰렛">출석/룰렛</button>
+                    <button class="btn nav-vip-btn btn-sm" onclick="app.openMembershipModal()" title="NEXUS PRIME VIP 멤버십">PRIME</button>
                     <button class="btn btn-primary btn-sm" onclick="app.openChargeModal()" title="잔액 충전">+ 충전</button>
                     <a href="/admin.html" class="btn btn-outline btn-sm" id="navAdminBtn" style="display:none;" title="관리자 제어 포털">관리자</a>
                     <button class="btn btn-icon" title="내 주문 및 프로필" onclick="app.openMyPageModal()">
@@ -69,7 +69,7 @@
                     </button>
                 </div>
 
-                <button class="btn btn-outline" onclick="app.openWishlistModal()" title="위시리스트 & 커스텀 덱">❤️ 찜 (<span id="navWishlistCount">0</span>)</button>
+                <button class="btn btn-outline" onclick="app.openWishlistModal()" title="위시리스트 & 커스텀 덱">찜 (<span id="navWishlistCount">0</span>)</button>
                 <button class="btn btn-outline" onclick="app.openInquiryModal()" title="1:1 문의">Q&A</button>
 
                 <button class="cart-btn" onclick="app.openCartModal()" aria-label="장바구니">
@@ -93,7 +93,7 @@
                 <p class="hero-desc">초저지연 뇌파 인터페이스, 양자 프로세서 덱, 군사 등급 암호화 스토리지를 공식 취급하는 글로벌 사이버 테크 플랫폼입니다.</p>
                 <div class="hero-cta">
                     <button class="btn btn-primary btn-lg" onclick="app.scrollToProducts()">컬렉션 탐색</button>
-                    <button class="btn nav-vip-btn btn-lg" onclick="app.openMembershipModal()">👑 PRIME 멤버십</button>
+                    <button class="btn nav-vip-btn btn-lg" onclick="app.openMembershipModal()">PRIME 멤버십</button>
                 </div>
             </div>
             <div class="hero-visual">
@@ -113,7 +113,7 @@
             <div class="catalog-header">
                 <div class="category-tabs">
                     <button class="tab-btn active" data-category="ALL" onclick="app.filterCategory('ALL')">전체보기</button>
-                    <button class="tab-btn vip-tab" data-category="VIP_EXCLUSIVE" onclick="app.filterCategory('VIP_EXCLUSIVE')">👑 VIP 전용관</button>
+                    <button class="tab-btn vip-tab" data-category="VIP_EXCLUSIVE" onclick="app.filterCategory('VIP_EXCLUSIVE')">VIP 전용관</button>
                     <button class="tab-btn" data-category="Laptops" onclick="app.filterCategory('Laptops')">Laptops</button>
                     <button class="tab-btn" data-category="Wearables" onclick="app.filterCategory('Wearables')">Wearables</button>
                     <button class="tab-btn" data-category="Smartphones" onclick="app.filterCategory('Smartphones')">Smartphones</button>
@@ -184,7 +184,7 @@
                         <span id="cartShippingFee">₩3,000</span>
                     </div>
                     <div class="summary-row" id="vipFreeShippingRow" style="display:none;">
-                        <span class="text-success">👑 PRIME VIP 무료배송</span>
+                        <span class="text-success">PRIME VIP 무료배송</span>
                         <span class="text-success" id="cartVipShippingDiscount">-₩3,000</span>
                     </div>
                     <div class="summary-row total-row">
@@ -346,7 +346,7 @@
         <div class="modal-dialog modal-lg">
             <button class="modal-close" onclick="app.closeModal('membershipModal')">&times;</button>
             <div class="modal-header">
-                <h2>👑 NEXUS <span class="vip-gold-gradient">PRIME VIP</span> 멤버십</h2>
+                <h2>NEXUS <span class="vip-gold-gradient">PRIME VIP</span> 멤버십</h2>
             </div>
             <div class="modal-body">
                 <div class="vip-card-banner">
@@ -357,17 +357,17 @@
                     </p>
                     <div class="vip-perks-grid">
                         <div class="vip-perk-card">
-                            <span class="vip-perk-icon">🚚</span>
+                            <span class="vip-perk-icon">[배송]</span>
                             <div class="vip-perk-title">전 상품 무료배송</div>
                             <div class="vip-perk-desc">구매 금액 제한 없이 모든 주문 건에 대해 배송비 ₩3,000 자동 면제</div>
                         </div>
                         <div class="vip-perk-card">
-                            <span class="vip-perk-icon">🎟️</span>
+                            <span class="vip-perk-icon">[쿠폰]</span>
                             <div class="vip-perk-title">₩50,000 전용 바우처</div>
                             <div class="vip-perk-desc">매월 1회 즉시 사용 가능한 ₩50,000 VIP 할인 쿠폰 자동 발급</div>
                         </div>
                         <div class="vip-perk-card">
-                            <span class="vip-perk-icon">⚡</span>
+                            <span class="vip-perk-icon">[혜택]</span>
                             <div class="vip-perk-title">시크릿 특가관 접근</div>
                             <div class="vip-perk-desc">일반 회원은 볼 수 없는 최대 60% 단독 비공개 특가 품목 구매 가능</div>
                         </div>
@@ -379,12 +379,12 @@
                     <div class="card-glass p-3 mb-3" style="border: 1px solid rgba(255,215,0,0.3);">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                             <div>
-                                <span class="vip-badge">👑 PRIME VIP ACTIVE</span>
+                                <span class="vip-badge">PRIME VIP ACTIVE</span>
                                 <h4 class="mt-2" style="font-size:1.2rem; color:#ffd700;" id="vipUsernameDisplay">회원님은 VIP 멤버입니다</h4>
                                 <p style="font-size:0.85rem; color:var(--text-secondary);">만료일: <strong id="vipExpiresAtDisplay">-</strong></p>
                             </div>
                             <div style="display:flex; gap:8px;">
-                                <button type="button" class="btn nav-vip-btn" onclick="app.claimVipCoupon()">🎟️ ₩50,000 바우처 수령</button>
+                                <button type="button" class="btn nav-vip-btn" onclick="app.claimVipCoupon()">₩50,000 바우처 수령</button>
                                 <button type="button" class="btn btn-ghost text-danger" onclick="app.cancelMembership()">구독 해지</button>
                             </div>
                         </div>
@@ -393,7 +393,7 @@
                             <div id="vipWelcomeNoteDisplay" style="color:var(--text-primary); font-size:0.9rem; margin-top:4px;">-</div>
                         </div>
                     </div>
-                    <button class="btn btn-outline btn-block" onclick="app.filterCategory('VIP_EXCLUSIVE'); app.closeModal('membershipModal'); app.scrollToProducts();">👑 VIP 시크릿 특가관 바로가기</button>
+                    <button class="btn btn-outline btn-block" onclick="app.filterCategory('VIP_EXCLUSIVE'); app.closeModal('membershipModal'); app.scrollToProducts();">VIP 시크릿 특가관 바로가기</button>
                 </div>
 
                 <!-- Subscription Form Pane (for non-members) -->
@@ -417,7 +417,7 @@
                                 <strong id="membershipUserBalance">₩0</strong>
                             </div>
                         </div>
-                        <button type="submit" class="btn nav-vip-btn btn-block btn-lg" style="font-size:1rem; font-weight:700;">👑 NEXUS PRIME ₩9,900 결제 및 가입하기</button>
+                        <button type="submit" class="btn nav-vip-btn btn-block btn-lg" style="font-size:1rem; font-weight:700;">NEXUS PRIME ₩9,900 결제 및 가입하기</button>
                     </form>
                 </div>
             </div>
@@ -481,7 +481,7 @@
                     <!-- Address Management Section -->
                     <div class="card-glass mt-3 p-3" style="grid-column: 1 / -1;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                            <h3 style="margin:0; font-size:1.1rem; color:var(--accent-cyan);">📍 나의 배송지 주소록 관리</h3>
+                            <h3 style="margin:0; font-size:1.1rem; color:var(--accent-cyan);">나의 배송지 주소록 관리</h3>
                             <button type="button" class="btn btn-outline btn-sm" onclick="app.openAddressModal()">+ 신규 배송지 추가</button>
                         </div>
                         <div id="myAddressList" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
@@ -521,12 +521,12 @@
         <div class="modal-dialog modal-lg">
             <button class="modal-close" onclick="app.closeModal('wishlistModal')">&times;</button>
             <div class="modal-header">
-                <h2>❤️ 위시리스트 및 <span class="text-gradient">사이버 커스텀 덱</span></h2>
+                <h2>위시리스트 및 <span class="text-gradient">사이버 커스텀 덱</span></h2>
             </div>
             <div class="modal-body">
                 <div class="category-tabs mb-3">
-                    <button class="tab-btn active" id="tabWishlistBtn" onclick="app.switchWishlistTab('items')">❤️ 찜 목록 (<span id="wishlistCount">0</span>)</button>
-                    <button class="tab-btn" id="tabDecksBtn" onclick="app.switchWishlistTab('decks')">🛠️ 나만의 덱 관리</button>
+                    <button class="tab-btn active" id="tabWishlistBtn" onclick="app.switchWishlistTab('items')">찜 목록 (<span id="wishlistCount">0</span>)</button>
+                    <button class="tab-btn" id="tabDecksBtn" onclick="app.switchWishlistTab('decks')">나만의 덱 관리</button>
                     <button class="tab-btn" id="tabCreateDeckBtn" onclick="app.switchWishlistTab('create')">+ 새 덱 만들기</button>
                 </div>
 
@@ -573,7 +573,7 @@
                                     <span class="text-muted">찜한 상품이 여기에 표시됩니다.</span>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">🛠️ 커스텀 덱 생성 및 공유 링크 발급</button>
+                            <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">커스텀 덱 생성 및 공유 링크 발급</button>
                         </form>
                     </div>
                 </div>
@@ -634,7 +634,7 @@
         <div class="modal-dialog modal-lg">
             <button class="modal-close" onclick="app.closeModal('inquiryModal')">&times;</button>
             <div class="modal-header">
-                <h2>🎧 1:1 고객지원 헬프데스크 & 기술 문의</h2>
+                <h2>1:1 고객지원 헬프데스크 & 기술 문의</h2>
             </div>
             <div class="modal-body">
                 <div class="card-glass mb-3 p-3">
@@ -679,10 +679,10 @@
 
                         <div class="form-group" style="display:flex; align-items:center; gap:8px;">
                             <input type="checkbox" id="inqIsSecret" checked>
-                            <label for="inqIsSecret" style="margin:0; font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">🔒 비밀글로 보호 (관리자 및 작성자 전용 열람)</label>
+                            <label for="inqIsSecret" style="margin:0; font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">비밀글로 보호 (관리자 및 작성자 전용 열람)</label>
                         </div>
 
-                        <button type="submit" class="btn btn-primary btn-block btn-lg mt-2">🎧 고객지원 티켓 제출</button>
+                        <button type="submit" class="btn btn-primary btn-block btn-lg mt-2">고객지원 티켓 제출</button>
                     </form>
                 </div>
 
@@ -712,7 +712,7 @@
         <div class="modal-dialog modal-md">
             <button class="modal-close" onclick="app.closeModal('rouletteModal')">&times;</button>
             <div class="modal-header">
-                <h2>🎡 일일 출석체크 & <span class="text-gradient">사이버 룰렛</span></h2>
+                <h2>일일 출석체크 & <span class="text-gradient">사이버 룰렛</span></h2>
             </div>
             <div class="modal-body">
                 <!-- Attendance Card -->
@@ -721,7 +721,7 @@
                         <span style="font-size:0.8rem; color:var(--text-muted);">오늘의 출석 상태:</span>
                         <h4 id="attendanceStatusText" style="margin:4px 0 0 0; color:var(--accent-cyan);">확인 중...</h4>
                     </div>
-                    <button type="button" id="btnClaimAttendance" class="btn btn-primary" onclick="app.claimAttendance()">📅 출석체크 (+1,000 P)</button>
+                    <button type="button" id="btnClaimAttendance" class="btn btn-primary" onclick="app.claimAttendance()">출석체크 (+1,000 P)</button>
                 </div>
 
                 <!-- Cyber Roulette Wheel -->
@@ -731,7 +731,7 @@
                         <canvas id="rouletteCanvas" width="280" height="280"></canvas>
                     </div>
                     <div style="text-align:center;">
-                        <button type="button" id="btnSpinRoulette" class="btn btn-primary btn-lg" onclick="app.spinRoulette()" style="min-width:200px; font-weight:700;">🎡 룰렛 돌리기 (무료)</button>
+                        <button type="button" id="btnSpinRoulette" class="btn btn-primary btn-lg" onclick="app.spinRoulette()" style="min-width:200px; font-weight:700;">룰렛 돌리기 (무료)</button>
                         <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">최대 5,000 P 당첨 기회! 획득한 포인트는 결제 시 현금처럼 사용 가능합니다.</p>
                     </div>
                 </div>
@@ -745,7 +745,7 @@
         <div class="modal-dialog modal-md">
             <button class="modal-close" onclick="app.closeModal('restockModal')">&times;</button>
             <div class="modal-header">
-                <h2>🔔 품절 상품 재입고 알림 신청</h2>
+                <h2>품절 상품 재입고 알림 신청</h2>
             </div>
             <div class="modal-body">
                 <p class="text-muted" style="font-size:0.9rem;">
@@ -766,7 +766,7 @@
                         <input type="url" id="restockWebhookUrl" placeholder="https://api.your-company.com/webhook/restock">
                         <span style="font-size:0.75rem; color:var(--text-muted);">* 재고 입고 시 서버가 해당 Webhook 엔드포인트로 JSON 이벤트를 푸시합니다.</span>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">🔔 재입고 알림 구독 완료</button>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">재입고 알림 구독 완료</button>
                 </form>
             </div>
         </div>
@@ -778,7 +778,7 @@
         <div class="modal-dialog modal-lg">
             <button class="modal-close no-print" onclick="app.closeModal('receiptModal')">&times;</button>
             <div class="modal-header no-print">
-                <h2>🧾 전자 세금계산서 / 거래명세서</h2>
+                <h2>전자 세금계산서 / 거래명세서</h2>
             </div>
             <div class="modal-body">
                 <div class="receipt-paper" id="receiptPrintArea">
@@ -844,7 +844,7 @@
 
                 <div class="no-print mt-3" style="display:flex; justify-content:flex-end; gap:10px;">
                     <button type="button" class="btn btn-outline" onclick="app.closeModal('receiptModal')">닫기</button>
-                    <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+                    <button type="button" class="btn btn-primary" onclick="window.print()">인쇄 / PDF 저장</button>
                 </div>
             </div>
         </div>
@@ -877,7 +877,7 @@
         <div class="modal-dialog modal-md">
             <button class="modal-close" onclick="app.closeModal('chargeModal')">&times;</button>
             <div class="modal-header">
-                <h2>⚡ 사이버 지갑 잔액 충전</h2>
+                <h2>사이버 지갑 잔액 충전</h2>
             </div>
             <div class="modal-body">
                 <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 16px;">
@@ -918,7 +918,7 @@
                 <hr class="divider" style="margin: 20px 0;">
 
                 <div>
-                    <h4 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--accent-pink);">🎁 프로모션 바우처 등록</h4>
+                    <h4 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--accent-pink);">프로모션 바우처 등록</h4>
                     <div style="display: flex; gap: 8px;">
                         <input type="text" id="voucherCodeInput" placeholder="바우처 코드 (예: CYBER_BONUS_100K)">
                         <button type="button" class="btn btn-outline" onclick="app.handleRedeemVoucher()">바우처 사용</button>

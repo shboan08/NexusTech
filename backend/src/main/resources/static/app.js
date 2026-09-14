@@ -45,7 +45,7 @@ const app = {
             const bar = document.getElementById('globalNotice');
             if (bar) {
                 bar.style.display = 'block';
-                bar.innerHTML = '🔔 ' + raw;
+                bar.innerHTML = '[공지] ' + raw;
             }
         }
 
@@ -152,7 +152,7 @@ const app = {
                                     <button class="btn btn-ghost" onclick="app.clearSearch()">초기화</button>`;
             } else if (isVipTab) {
                 banner.style.display = 'flex';
-                banner.innerHTML = `<span>👑 <strong>NEXUS PRIME VIP 전용 시크릿 특가관:</strong> 일반 미공개 VIP 단독 할인 품목</span>
+                banner.innerHTML = `<span><strong>NEXUS PRIME VIP 전용 시크릿 특가관:</strong> 일반 미공개 VIP 단독 할인 품목</span>
                                     <button class="btn btn-ghost" onclick="app.resetFilter()">전체보기</button>`;
             } else {
                 banner.style.display = 'none';
@@ -169,9 +169,9 @@ const app = {
                 return `
                 <div class="product-card ${isSoldOut ? 'sold-out' : ''}" onclick="app.openProductModal(${p.id})" style="position:relative;">
                     ${isSoldOut ? '<span class="badge-soldout">SOLD OUT 품절</span>' : ''}
-                    ${(p.isExclusive || isVipTab) ? '<span class="product-vip-badge">👑 VIP 특가</span>' : ''}
+                    ${(p.isExclusive || isVipTab) ? '<span class="product-vip-badge">VIP 특가</span>' : ''}
                     <button class="btn-wishlist-heart ${wishlisted ? 'active' : ''}" onclick="event.stopPropagation(); app.toggleWishlist(${p.id})" title="위시리스트 찜하기">
-                        ${wishlisted ? '❤️' : '🤍'}
+                        ${wishlisted ? '[찜]' : '[선택]'}
                     </button>
                     <div class="product-img-wrapper">
                         <img class="product-image" src="${p.imageUrl || 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600'}" alt="${p.name}">
@@ -183,7 +183,7 @@ const app = {
                         <div class="product-footer">
                             <span class="product-price">₩${Number(p.price).toLocaleString()}</span>
                             ${isSoldOut ? `
-                                <button class="btn btn-outline" style="border-color:#ef4444; color:#ef4444; font-size:0.85rem;" onclick="event.stopPropagation(); app.openRestockModal(${p.id}, '${(p.name||'').replace(/'/g, "\\'")}')">🔔 입고 알림</button>
+                                <button class="btn btn-outline" style="border-color:#ef4444; color:#ef4444; font-size:0.85rem;" onclick="event.stopPropagation(); app.openRestockModal(${p.id}, '${(p.name||'').replace(/'/g, "\\'")}')">입고 알림</button>
                             ` : `
                                 <button class="btn btn-primary" onclick="event.stopPropagation(); app.addToCartQuick(${p.id}, ${p.price})">담기</button>
                             `}
@@ -264,7 +264,7 @@ const app = {
                     <div class="detail-actions">
                         <button class="btn btn-primary btn-lg" onclick="app.addToCartQuick(${p.id}, ${p.price})">장바구니 담기</button>
                         <button id="modalWishBtn-${p.id}" class="btn ${wishlisted ? 'btn-danger' : 'btn-outline'} btn-lg" onclick="app.toggleWishlist(${p.id})">
-                            ${wishlisted ? '❤️ 찜 해제' : '🤍 찜하기'}
+                            ${wishlisted ? '찜 해제' : '찜하기'}
                         </button>
                         <a href="/api/files/download?filename=${p.manualFilename}" class="btn btn-outline btn-lg" download>제품 매뉴얼 다운로드</a>
                     </div>
@@ -391,7 +391,7 @@ const app = {
                         <button type="button" class="btn btn-ghost btn-sm" onclick="app.updateCartQty(${item.id}, ${item.quantity - 1})">-</button>
                         <input type="number" value="${item.quantity}" style="width:45px; text-align:center; padding:4px;" onchange="app.updateCartQty(${item.id}, this.value)">
                         <button type="button" class="btn btn-ghost btn-sm" onclick="app.updateCartQty(${item.id}, ${item.quantity + 1})">+</button>
-                        <button type="button" class="btn btn-ghost text-danger btn-sm" onclick="app.deleteCartItem(${item.id})" title="삭제">🗑️</button>
+                        <button type="button" class="btn btn-ghost text-danger btn-sm" onclick="app.deleteCartItem(${item.id})" title="삭제">삭제</button>
                     </div>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center;">
@@ -488,7 +488,7 @@ const app = {
         document.getElementById('checkoutUserBalance').textContent = `₩${Number(this.currentUser.balance).toLocaleString()}`;
         const shippingNotice = document.getElementById('checkoutShippingNotice');
         if (shippingNotice) {
-            shippingNotice.textContent = isVip ? '₩0 (👑 PRIME VIP 무료배송 혜택 적용)' : '₩3,000 (일반 배송)';
+            shippingNotice.textContent = isVip ? '₩0 (PRIME VIP 무료배송 혜택 적용)' : '₩3,000 (일반 배송)';
             shippingNotice.style.color = isVip ? '#10b981' : 'var(--text-secondary)';
         }
 
@@ -549,7 +549,7 @@ const app = {
 
             const data = await res.json();
             if (res.ok) {
-                let msg = `✅ 주문이 성공적으로 결제되었습니다!\n주문번호: #${data.orderId}\n지갑 결제액: ₩${Number(data.chargedAmount).toLocaleString()}`;
+                let msg = `[성공] 주문이 성공적으로 결제되었습니다!\n주문번호: #${data.orderId}\n지갑 결제액: ₩${Number(data.chargedAmount).toLocaleString()}`;
                 if (data.pointsUsed) msg += `\n포인트 사용: ${data.pointsUsed} P`;
                 if (data.cashbackEarned) msg += `\n캐시백 적립: +${data.cashbackEarned} P (1%)`;
                 alert(msg);
@@ -688,7 +688,7 @@ const app = {
         const tierEl = document.getElementById('profileMembershipTier');
         if (tierEl) {
             const isVip = Boolean(this.currentUser.membershipActive);
-            tierEl.textContent = isVip ? `👑 ${this.currentUser.membershipTier || 'PRIME'}` : '일반 회원 (NONE)';
+            tierEl.textContent = isVip ? `${this.currentUser.membershipTier || 'PRIME'}` : '일반 회원 (NONE)';
             tierEl.style.color = isVip ? '#ffd700' : 'var(--text-muted)';
         }
 
@@ -738,18 +738,18 @@ const app = {
                         <p><strong>운송장 코드:</strong> <code>${o.trackingCode || '미발급'}</code></p>
                         ${isRefunded ? `
                             <div class="order-refund-info" style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.12); border-left:3px solid #ef4444; border-radius:var(--radius-sm);">
-                                <div style="color:#ef4444; font-size:0.85rem; font-weight:700;">↩️ 환불 완료: ₩${Number(o.refundAmount || o.totalAmount).toLocaleString()}</div>
+                                <div style="color:#ef4444; font-size:0.85rem; font-weight:700;">[환불 완료]: ₩${Number(o.refundAmount || o.totalAmount).toLocaleString()}</div>
                                 <!-- Stored XSS sink: refundReason rendered via innerHTML -->
                                 <div style="color:var(--text-secondary); font-size:0.8rem; margin-top:4px;">사유: <span>${o.refundReason || '기재 없음'}</span></div>
                             </div>
                         ` : ''}
                         <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
                             <button class="btn btn-outline btn-sm" onclick="app.openReceiptModal(${o.id})">
-                                🧾 전자 영수증
+                                전자 영수증
                             </button>
                             ${canRefund ? `
                                 <button class="btn btn-outline btn-sm" style="color:#ef4444; border-color:#ef4444;" onclick="app.openRefundModal(${o.id}, ${o.totalAmount}, '${o.status}')">
-                                    ↩️ 환불 / 주문취소 신청
+                                    환불 / 주문취소 신청
                                 </button>
                             ` : ''}
                         </div>
@@ -843,7 +843,7 @@ const app = {
             const data = await res.json();
             if (res.ok) {
                 hiddenUrl.value = data.attachmentUrl;
-                statusEl.innerHTML = `✅ 업로드 완료: <a href="${data.attachmentUrl}" target="_blank" style="color:var(--accent-cyan); text-decoration:underline;">${data.originalFilename}</a> (${data.fileSize} bytes)`;
+                statusEl.innerHTML = `[업로드 완료]: <a href="${data.attachmentUrl}" target="_blank" style="color:var(--accent-cyan); text-decoration:underline;">${data.originalFilename}</a> (${data.fileSize} bytes)`;
             } else {
                 statusEl.innerHTML = `<span style="color:var(--color-danger);">업로드 실패: ${data.message || '오류'}</span>`;
             }
@@ -909,7 +909,7 @@ const app = {
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span class="badge">${inq.category || 'GENERAL'}</span>
                             <span class="status-badge ${inq.status === 'RESOLVED' ? 'badge-resolved' : 'badge-open'}">${inq.status || 'OPEN'}</span>
-                            ${inq.isSecret ? '<span style="font-size:0.75rem; color:#f59e0b;">🔒 비밀글</span>' : ''}
+                            ${inq.isSecret ? '<span style="font-size:0.75rem; color:#f59e0b;">[비밀글]</span>' : ''}
                         </div>
                         <span style="font-size:0.8rem; color:var(--text-muted);">${inq.createdAt ? String(inq.createdAt).substring(0,10) : ''}</span>
                     </div>
@@ -917,7 +917,7 @@ const app = {
                     <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:4px;">작성자: <strong>${inq.username}</strong>${inq.orderId ? ' | 관련 주문: #' + inq.orderId : ''}</div>
                     ${inq.adminReply ? `
                         <div class="admin-reply-box mt-2" style="font-size:0.82rem;">
-                            <strong style="color:var(--accent-cyan);">🎧 NEXUS 기술지원팀 답변:</strong> ${inq.adminReply}
+                            <strong style="color:var(--accent-cyan);">[NEXUS 기술지원팀 답변]:</strong> ${inq.adminReply}
                         </div>
                     ` : ''}
                 </div>
@@ -939,7 +939,7 @@ const app = {
 
                 const attachEl = document.getElementById('ticketDetailAttachment');
                 if (inq.attachmentUrl) {
-                    attachEl.innerHTML = `📎 <strong>첨부파일:</strong> <a href="${inq.attachmentUrl}" target="_blank" style="color:var(--accent-cyan); text-decoration:underline;">파일 열기 / 다운로드</a>`;
+                    attachEl.innerHTML = `<strong>첨부파일:</strong> <a href="${inq.attachmentUrl}" target="_blank" style="color:var(--accent-cyan); text-decoration:underline;">파일 열기 / 다운로드</a>`;
                     attachEl.style.display = 'block';
                 } else {
                     attachEl.style.display = 'none';
@@ -947,7 +947,7 @@ const app = {
 
                 const replyEl = document.getElementById('ticketDetailReply');
                 if (inq.adminReply) {
-                    replyEl.innerHTML = `<strong style="color:var(--accent-cyan);">🎧 관리자 공식 답변:</strong><br>${inq.adminReply}`;
+                    replyEl.innerHTML = `<strong style="color:var(--accent-cyan);">[관리자 공식 답변]:</strong><br>${inq.adminReply}`;
                     replyEl.style.display = 'block';
                 } else {
                     replyEl.style.display = 'none';
@@ -1255,7 +1255,7 @@ const app = {
                     activePane.style.display = 'block';
                     subscribePane.style.display = 'none';
 
-                    document.getElementById('vipUsernameDisplay').textContent = `${data.username}님은 👑 ${data.tier} 정회원입니다`;
+                    document.getElementById('vipUsernameDisplay').textContent = `${data.username}님은 ${data.tier} 정회원입니다`;
                     const exp = data.expiresAt ? new Date(data.expiresAt).toLocaleDateString() : '무기한 VIP';
                     document.getElementById('vipExpiresAtDisplay').textContent = exp;
 
@@ -1327,7 +1327,7 @@ const app = {
 
             const data = await res.json();
             if (res.ok) {
-                alert(`🎟️ [쿠폰 발급 완료]\n쿠폰 코드: ${data.couponCode}\n할인 혜택: ₩${Number(data.discountAmount).toLocaleString()}\n\n${data.note}`);
+                alert(`[쿠폰 발급 완료]\n쿠폰 코드: ${data.couponCode}\n할인 혜택: ₩${Number(data.discountAmount).toLocaleString()}\n\n${data.note}`);
                 const couponInput = document.getElementById('couponInput');
                 if (couponInput) {
                     couponInput.value = data.couponCode;
@@ -1389,7 +1389,7 @@ const app = {
                 if (btn) {
                     const wishlisted = this.isWishlisted(productId);
                     btn.className = `btn ${wishlisted ? 'btn-danger' : 'btn-outline'} btn-lg`;
-                    btn.textContent = wishlisted ? '❤️ 찜 해제' : '🤍 찜하기';
+                    btn.textContent = wishlisted ? '찜 해제' : '찜하기';
                 }
                 if (document.getElementById('wishlistModal').classList.contains('open')) {
                     this.renderWishlistItems();
@@ -1445,7 +1445,7 @@ const app = {
         if (!this.wishlist || this.wishlist.length === 0) {
             container.innerHTML = `
                 <div class="text-muted" style="grid-column: 1 / -1; padding: 40px; text-align: center;">
-                    <p style="font-size: 1.1rem; margin-bottom: 8px;">❤️ 찜한 상품이 없습니다.</p>
+                    <p style="font-size: 1.1rem; margin-bottom: 8px;">찜한 상품이 없습니다.</p>
                     <p style="font-size: 0.9rem;">스토어에서 관심 있는 사이버 하드웨어를 찜해 나만의 커스텀 덱을 만들어보세요.</p>
                 </div>`;
             return;
@@ -1460,7 +1460,7 @@ const app = {
                     <p class="text-success" style="font-weight: 700; margin-bottom: 8px;">₩${Number(item.productPrice || 0).toLocaleString()}</p>
                 </div>
                 <div style="display: flex; gap: 8px; margin-top: 12px;">
-                    <button class="btn btn-primary btn-sm" style="flex: 1;" onclick="app.addToCartQuick(${item.productId}, ${item.productPrice || 0})">🛒 담기</button>
+                    <button class="btn btn-primary btn-sm" style="flex: 1;" onclick="app.addToCartQuick(${item.productId}, ${item.productPrice || 0})">담기</button>
                     <button class="btn btn-outline btn-sm" style="color: #ef4444; border-color: #ef4444;" onclick="app.toggleWishlist(${item.productId})">삭제</button>
                 </div>
             </div>
@@ -1481,7 +1481,7 @@ const app = {
             if (decks.length === 0) {
                 container.innerHTML = `
                     <div class="text-muted" style="padding: 40px; text-align: center;">
-                        <p style="font-size: 1.1rem; margin-bottom: 8px;">🛠️ 생성된 커스텀 덱이 없습니다.</p>
+                        <p style="font-size: 1.1rem; margin-bottom: 8px;">생성된 커스텀 덱이 없습니다.</p>
                         <p style="font-size: 0.9rem;">[+ 새 덱 만들기] 탭에서 찜한 하드웨어 부품들을 조합해 나만의 덱을 공유해보세요.</p>
                     </div>`;
                 return;
@@ -1493,28 +1493,28 @@ const app = {
                         <div>
                             <span class="deck-title">${d.deckName}</span>
                             <span class="deck-badge ${d.isPublic ? 'badge-public' : 'badge-private'}">
-                                ${d.isPublic ? '🌐 PUBLIC 공개' : '🔒 PRIVATE 기밀'}
+                                ${d.isPublic ? '[PUBLIC 공개]' : '[PRIVATE 기밀]'}
                             </span>
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <button class="btn btn-outline btn-sm" onclick="app.viewDeck(${d.id})">👁️ 상세</button>
-                            <button class="btn btn-ghost btn-sm" style="color: #ef4444;" onclick="app.deleteDeck(${d.id})">🗑️</button>
+                            <button class="btn btn-outline btn-sm" onclick="app.viewDeck(${d.id})">상세</button>
+                            <button class="btn btn-ghost btn-sm" style="color: #ef4444;" onclick="app.deleteDeck(${d.id})">삭제</button>
                         </div>
                     </div>
                     <!-- Stored XSS sink: deck description rendered via innerHTML -->
                     <div class="deck-desc">${d.description || '설명 없음'}</div>
                     ${d.secretNote ? `
                         <div class="deck-secret-note">
-                            🔐 <strong>SECRET NOTE:</strong> ${d.secretNote}
+                            <strong>SECRET NOTE:</strong> ${d.secretNote}
                         </div>
                     ` : ''}
                     <div class="deck-items-summary mt-2" style="font-size: 0.85rem; color: var(--text-secondary);">
-                        📦 구성 부품: <strong>${d.items ? d.items.length : 0}개</strong>
+                        구성 부품: <strong>${d.items ? d.items.length : 0}개</strong>
                         ${d.items && d.items.length > 0 ? `(${d.items.map(i => i.productName).slice(0, 3).join(', ')}${d.items.length > 3 ? ' ...' : ''})` : ''}
                     </div>
                     <div class="mt-3" style="display: flex; gap: 8px; align-items: center;">
                         <button class="btn btn-primary btn-sm" onclick="app.copyDeckShareUrl('${d.shareToken}')">
-                            🔗 공유 링크 복사
+                            공유 링크 복사
                         </button>
                         <span style="font-size: 0.75rem; color: var(--text-muted);">토큰: <code>${d.shareToken}</code></span>
                     </div>
@@ -1571,7 +1571,7 @@ const app = {
 
             const data = await res.json();
             if (res.ok) {
-                alert(`✨ [커스텀 덱 생성 완료!]\n공유 토큰: ${data.shareToken}\n공유 링크가 생성되었습니다.`);
+                alert(`[커스텀 덱 생성 완료!]\n공유 토큰: ${data.shareToken}\n공유 링크가 생성되었습니다.`);
                 document.getElementById('deckNameInput').value = '';
                 document.getElementById('deckDescInput').value = '';
                 document.getElementById('deckSecretNoteInput').value = '';
@@ -1605,7 +1605,7 @@ const app = {
     copyDeckShareUrl(token) {
         const url = `${window.location.origin}/?deckToken=${token}`;
         navigator.clipboard.writeText(url).then(() => {
-            alert(`📋 공유 링크가 클립보드에 복사되었습니다:\n${url}`);
+            alert(`공유 링크가 클립보드에 복사되었습니다:\n${url}`);
         }).catch(() => {
             prompt('공유 링크를 복사하세요:', url);
         });
@@ -1622,13 +1622,13 @@ const app = {
                 ? deck.items.map(i => `• ${i.productName} (₩${Number(i.productPrice || 0).toLocaleString()})`).join('\n')
                 : '(등록된 부품 없음)';
 
-            let msg = `[🛠️ 커스텀 덱 상세 조회]\n` +
+            let msg = `[커스텀 덱 상세 조회]\n` +
                       `ID: ${deck.id}\n` +
                       `소유자: ${deck.ownerUsername || 'User #' + deck.userId}\n` +
                       `덱 명칭: ${deck.deckName}\n` +
                       `공개 여부: ${deck.isPublic ? '공개 (PUBLIC)' : '비공개 (PRIVATE/기밀)'}\n` +
                       `소개: ${deck.description || '없음'}\n` +
-                      (deck.secretNote ? `🔐 기밀 메모: ${deck.secretNote}\n` : '') +
+                      (deck.secretNote ? `기밀 메모: ${deck.secretNote}\n` : '') +
                       `\n[구성 부품 목록]\n${itemsList}`;
             alert(msg);
         } catch (e) {
@@ -1646,7 +1646,7 @@ const app = {
                 ? deck.items.map(i => `• ${i.productName} (₩${Number(i.productPrice || 0).toLocaleString()})`).join('\n')
                 : '(등록된 부품 없음)';
 
-            let msg = `🌟 [공유받은 커스텀 덱: ${deck.deckName}]\n` +
+            let msg = `[공유받은 커스텀 덱: ${deck.deckName}]\n` +
                       `작성자: ${deck.ownerUsername || '익명'}\n` +
                       `설명: ${deck.description || '없음'}\n` +
                       `\n[구성 부품 목록]\n${itemsList}`;
@@ -1691,12 +1691,12 @@ const app = {
             const data = await res.json();
             if (res.ok) {
                 const amount = data.refundedAmount !== undefined ? data.refundedAmount : data.refundAmount;
-                alert(`✅ [환불 승인 완료]\n환불 금액: ₩${Number(amount || 0).toLocaleString()}\n${data.message}`);
+                alert(`[환불 승인 완료]\n환불 금액: ₩${Number(amount || 0).toLocaleString()}\n${data.message}`);
                 this.closeModal('refundModal');
                 await this.fetchProfile();
                 await this.loadMyOrders();
             } else {
-                alert(`⚠️ 환불 실패: ${data.message || '요청이 거부되었습니다.'}`);
+                alert(`[경고] 환불 실패: ${data.message || '요청이 거부되었습니다.'}`);
             }
         } catch (e) {
             alert('환불 요청 오류: ' + e.message);
@@ -1729,7 +1729,7 @@ const app = {
                 const statusEl = document.getElementById('attendanceStatusText');
                 const btnClaim = document.getElementById('btnClaimAttendance');
                 if (data.attendedToday) {
-                    statusEl.innerHTML = `✅ <strong style="color:var(--color-success);">오늘 출석 완료</strong> (${data.todayDate})`;
+                    statusEl.innerHTML = `<strong style="color:var(--color-success);">오늘 출석 완료</strong> (${data.todayDate})`;
                     if (btnClaim) {
                         btnClaim.disabled = true;
                         btnClaim.textContent = '출석 완료됨';
@@ -1739,7 +1739,7 @@ const app = {
                     statusEl.innerHTML = `⏳ <strong style="color:#f59e0b;">미출석 상태</strong> (+1,000P 수령 가능)`;
                     if (btnClaim) {
                         btnClaim.disabled = false;
-                        btnClaim.textContent = '📅 출석체크 (+1,000 P)';
+                        btnClaim.textContent = '출석체크 (+1,000 P)';
                         btnClaim.style.opacity = '1';
                     }
                 }
@@ -1821,7 +1821,7 @@ const app = {
             });
             const data = await res.json();
             if (res.ok) {
-                alert(`🎉 [출석체크 성공]\n${data.message}\n현재 보유 포인트: ${Number(data.currentPoints).toLocaleString()} P`);
+                alert(`[출석체크 성공]\n${data.message}\n현재 보유 포인트: ${Number(data.currentPoints).toLocaleString()} P`);
                 await this.loadPointStatus();
                 await this.fetchProfile();
             } else {
@@ -1840,7 +1840,7 @@ const app = {
         const btn = document.getElementById('btnSpinRoulette');
         if (btn) {
             btn.disabled = true;
-            btn.textContent = '룰렛 회전 중... 🎡';
+            btn.textContent = '룰렛 회전 중...';
         }
 
         // Server request to get prize
@@ -1884,9 +1884,9 @@ const app = {
                 this.rouletteSpinning = false;
                 if (btn) {
                     btn.disabled = false;
-                    btn.textContent = '🎡 룰렛 돌리기 (무료)';
+                    btn.textContent = '룰렛 돌리기 (무료)';
                 }
-                alert(`🎊 축하합니다!\n사이버 룰렛에서 ${prizePoints.toLocaleString()} P 당첨되었습니다!`);
+                alert(`축하합니다!\n사이버 룰렛에서 ${prizePoints.toLocaleString()} P 당첨되었습니다!`);
                 this.fetchProfile();
             }
         };
@@ -1925,7 +1925,7 @@ const app = {
             });
             const data = await res.json();
             if (res.ok) {
-                let msg = `🔔 [재입고 알림 신청 완료]\n${data.message}\n상품: ${data.productName}`;
+                let msg = `[재입고 알림 신청 완료]\n${data.message}\n상품: ${data.productName}`;
                 if (data.webhookVerification) {
                     msg += `\n\n[Webhook 실시간 응답 진단]:\n${data.webhookVerification}`;
                 }

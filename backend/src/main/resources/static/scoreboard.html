@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>🎯 취약점 스코어보드 - Vuln-Mall Security Playground</title>
+    <title>취약점 스코어보드 - Vuln-Mall Security Playground</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Pretendard:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -343,14 +343,14 @@
 
     <header>
         <div class="brand">
-            <h1>🎯 Vuln-Mall Scoreboard</h1>
+            <h1>Vuln-Mall Scoreboard</h1>
             <span id="versionTag">OWASP WSTG v4.2 CTF</span>
-            <span id="wsStatusBadge" style="font-size:0.75rem; background:rgba(255,255,255,0.06); color:#8b949e; padding:3px 10px; border-radius:12px; border:1px solid var(--border-color); font-family:monospace;">⚪ WebSocket Connecting...</span>
+            <span id="wsStatusBadge" style="font-size:0.75rem; background:rgba(255,255,255,0.06); color:#8b949e; padding:3px 10px; border-radius:12px; border:1px solid var(--border-color); font-family:monospace;">WebSocket Connecting...</span>
         </div>
         <div class="nav-links">
-            <a href="/" class="btn btn-secondary">🛍️ 쇼핑몰 메인</a>
-            <button onclick="loadScoreboard()" class="btn btn-secondary">🔄 새로고침</button>
-            <button onclick="confirmReset()" class="btn btn-danger">🗑️ 발견 기록 초기화</button>
+            <a href="/" class="btn btn-secondary">쇼핑몰 메인</a>
+            <button onclick="loadScoreboard()" class="btn btn-secondary">새로고침</button>
+            <button onclick="confirmReset()" class="btn btn-danger">발견 기록 초기화</button>
         </div>
     </header>
 
@@ -376,13 +376,13 @@
 
             <div class="category-filters" id="categoryFilters">
                 <div class="filter-chip active" onclick="filterCategory('ALL')">전체보기</div>
-                <div class="filter-chip" onclick="filterCategory('Injection')">💉 Injection (11)</div>
-                <div class="filter-chip" onclick="filterCategory('XSS')">⚡ XSS (3)</div>
-                <div class="filter-chip" onclick="filterCategory('Auth')">🔐 Auth/Access (6)</div>
-                <div class="filter-chip" onclick="filterCategory('Crypto')">🔑 Crypto (2)</div>
-                <div class="filter-chip" onclick="filterCategory('BizLogic')">⚙️ Business Logic (5)</div>
-                <div class="filter-chip" onclick="filterCategory('Client')">🌐 Client-Side (3)</div>
-                <div class="filter-chip" onclick="filterCategory('Config')">🛡️ Config/Exposure (2)</div>
+                <div class="filter-chip" onclick="filterCategory('Injection')">Injection (11)</div>
+                <div class="filter-chip" onclick="filterCategory('XSS')">XSS (3)</div>
+                <div class="filter-chip" onclick="filterCategory('Auth')">Auth/Access (6)</div>
+                <div class="filter-chip" onclick="filterCategory('Crypto')">Crypto (2)</div>
+                <div class="filter-chip" onclick="filterCategory('BizLogic')">Business Logic (5)</div>
+                <div class="filter-chip" onclick="filterCategory('Client')">Client-Side (3)</div>
+                <div class="filter-chip" onclick="filterCategory('Config')">Config/Exposure (2)</div>
             </div>
         </div>
 
@@ -432,7 +432,7 @@
                 renderTable();
             } catch (err) {
                 console.error('Failed to load scoreboard:', err);
-                showToast('❌ 스코어보드 정보를 불러오지 못했습니다.');
+                showToast('[오류] 스코어보드 정보를 불러오지 못했습니다.');
             }
         }
 
@@ -468,7 +468,7 @@
                 const flagDisplay = isFound
                     ? `<div class="flag-box">
                          <span>${v.flag}</span>
-                         <button class="copy-btn" onclick="copyText('${v.flag}')" title="복사">📋</button>
+                         <button class="copy-btn" onclick="copyText('${v.flag}')" title="복사">복사</button>
                        </div>`
                     : `<span style="color: var(--text-sub); font-family: monospace;">FLAG{????????????????}</span>`;
 
@@ -493,12 +493,12 @@
 
         async function triggerVuln(wstgId, name) {
             // 수동 트리거 및 자동 안내
-            showToast(`💡 [${wstgId}] ${name}을(를) WALKTHROUGH.md 가이드에 따라 공격 테스트해보세요!`);
+            showToast(`[안내] [${wstgId}] ${name}을(를) WALKTHROUGH.md 가이드에 따라 공격 테스트해보세요!`);
         }
 
         function copyText(text) {
             navigator.clipboard.writeText(text).then(() => {
-                showToast('📋 플래그가 클립보드에 복사되었습니다: ' + text);
+                showToast('[완료] 플래그가 클립보드에 복사되었습니다: ' + text);
             });
         }
 
@@ -510,7 +510,7 @@
             try {
                 const res = await fetch('/api/scoreboard/reset', { method: 'POST' });
                 const data = await res.json();
-                showToast('🗑️ 스코어보드가 초기화되었습니다.');
+                showToast('[완료] 스코어보드가 초기화되었습니다.');
                 loadScoreboard();
             } catch (err) {
                 showToast('초기화 실패: ' + err);
@@ -544,7 +544,7 @@
                 };
 
                 socket.onclose = () => {
-                    badge.innerText = '🔴 WebSocket Reconnecting...';
+                    badge.innerText = '[연결중] WebSocket Reconnecting...';
                     badge.style.color = 'var(--accent-red)';
                     badge.style.borderColor = 'rgba(231, 76, 60, 0.4)';
                     badge.style.background = 'rgba(231, 76, 60, 0.1)';
@@ -562,7 +562,7 @@
                             // 실시간 취약점 발견 이벤트 처리
                             handleRealtimeVulnFound(msg);
                         } else if (msg.type === 'RESET') {
-                            showToast('🗑️ 스코어보드가 초기화되었습니다.');
+                            showToast('[완료] 스코어보드가 초기화되었습니다.');
                             loadScoreboard();
                         }
                     } catch (e) {
@@ -593,7 +593,7 @@
             renderTable();
 
             // 4. 화려한 토스트 알림
-            showToast(`🎉 [${data.wstgId}] 취약점 공략 성공! 플래그 획득: ${data.flag}`);
+            showToast(`[성공] [${data.wstgId}] 취약점 공략 성공! 플래그 획득: ${data.flag}`);
         }
 
         // 초기 데이터 로딩 및 웹소켓 연결
