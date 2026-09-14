@@ -34,7 +34,7 @@ NEXUS TECH는 상용 이커머스 서비스(하이엔드 테크 하드웨어 쇼
 5. **주문 취소 및 환불 / 반품 워크플로우 시스템**:
    - 마이페이지 내 주문 건별 환불 신청, 사유 메모 기재, 지갑 잔액 즉시 복원
 6. **위시리스트 (찜하기) & 사이버 커스텀 덱 공유 시스템**:
-   - 메인 스토어 찜하기(찜하기), 찜 상품 기반 나만의 사이버 덱 구성 및 고유 토큰 공유 링크 발급
+   - 메인 스토어 찜하기(위시리스트), 찜 상품 기반 나만의 사이버 덱 구성 및 고유 토큰 공유 링크 발급
 7. **NEXUS PRIME VIP 멤버십 구독 & 전용 시크릿 특가관**:
    - 월 구독료 결제, VIP 무료배송 혜택, 전용 5만원 바우처 발급, 일반 미노출 전용관
 8. **배송지 주소록 원장 & 사이버 지갑 잔액 충전**:
@@ -85,92 +85,75 @@ java -jar backend/target/vuln-mall-backend-1.0.0.jar --spring.profiles.active=h2
 
 ---
 
-## 4. 취약점 매트릭스 (OWASP WSTG 분류 기준, 총 61개)
+## 4. 취약점 카탈로그 (전체 61개, WALKTHROUGH.md 번호 1:1 매핑)
 
-### WSTG-INPV: 데이터 검증 및 인젝션 (21개)
-1. **SQL Injection - LIKE 문자열 결합** (`SQLI_LIKE`) - 상품 검색 키워드 바인딩 누락
-2. **SQL Injection - UNION-Based** (`SQLI_UNION`) - 카테고리 필터링 UNION 쿼리 결합
-3. **SQL Injection - ORDER BY Blind** (`SQLI_ORDERBY`) - 정렬 컬럼 및 방향 동적 결합
-4. **SQL Injection - Boolean-Based Blind** (`SQLI_BOOL_BLIND`) - 쿠폰 코드 검증 블라인드 신호
-5. **SQL Injection - Time-Based Blind** (`SQLI_TIME_BLIND`) - 배송 추적 코드 시간 지연 함수 주입
-6. **Second-Order SQL Injection** (`SQLI_SECOND`) - 문의글 제목 저장 후 감사 로그 검색 시 2차 실행
-7. **Reflected XSS (HTML 응답)** (`XSS_REFLECTED`) - 고객지원 에코 파라미터 반사
-8. **Stored XSS (리뷰 댓글)** (`XSS_STORED_REVIEW`) - 상품 리뷰 본문 영구 저장 스크립트 실행
-9. **Stored XSS (고객 문의)** (`XSS_STORED_INQ`) - 1:1 Q&A 문의 본문 스토어드 스크립트
-10. **Path Traversal (임의 파일 다운로드)** (`PATH_TRAVERSAL`) - 매뉴얼 다운로드 상위 경로 탐색
-11. **XML External Entity (XXE)** (`XXE`) - XML 영수증 파싱 시 외부 엔티티 참조
-12. **Server-Side Template Injection (SpEL)** (`SSTI`) - 영수증 템플릿 SpEL 표현식 동적 실행
-13. **Command Injection (OS 명령 실행)** (`CMD_INJECTION`) - 물류망 네트워크 핑 진단 인자 탈출
-14. **SSRF (서버 사이드 요청 위조)** (`SSRF`) - 이미지 프록시 다운로드 내부망 접근
-15. **Zip Slip (Archive Directory Traversal)** (`ZIP_SLIP`) - 압축 해제 엔트리 상위 경로 탈출
-16. **CRLF / Log Injection** (`CRLF_LOG`) - 감사 로그 개행 문자 미필터링 조작
-17. **무제한 파일 업로드** (`FILE_UPLOAD`) - 공용 업로드 확장자 검증 부재
-18. **Stored XSS (배송지 메모)** (`XSS_STORED_ADDRESS`) - 주소록 배송 메모 스토어드 XSS
-19. **SQL Injection (주소록 검색)** (`SQLI_ADDRESS`) - 주소록 도로명/우편번호 검색 SQLi
-20. **Stored XSS (장바구니 메모)** (`XSS_STORED_CART`) - 장바구니 품목 요청 메모 XSS
-21. **1:1 헬프데스크 무제한 파일 업로드** (`TICKET_FILE_UPLOAD`) - 문의 증빙 웹쉘 업로드
-
-### WSTG-CRYP: 암호학적 취약점 (2개)
-22. **AES-ECB 모드 블록 셔플링** (`AES_ECB`) - 고정 블록 치환을 통한 Remember-Me 권한 조작
-23. **취약한 비밀번호 재설정 토큰** (`PREDICTABLE_TOKEN`) - 예측 가능한 타임스탬프 토큰 생성
-
-### WSTG-ATHN & ATHZ: 인증 및 인가 통제 (13개)
-24. **JWT Algorithm Confusion** (`JWT_CONFUSION`) - RSA 공개키를 HMAC 대칭키로 오인하는 알고리즘 혼동
-25. **계정 열거 (Username Enumeration)** (`USER_ENUM`) - 로그인 실패 시 차별적 에러 메시지
-26. **Mass Assignment (프로필 권한 상승)** (`MASS_ASSIGN_PROFILE`) - 프로필 업데이트 시 role 임의 승격
-27. **Mass Assignment (회원가입 권한 지정)** (`MASS_ASSIGN_REG`) - 회원가입 시 ADMIN 등급 강제 부여
-28. **BOLA / IDOR (타인 주문 조회)** (`BOLA_READ`) - 타인 주문 식별자 무단 조회
-29. **BOLA / IDOR (타인 배송지 변경)** (`BOLA_WRITE`) - 타인 주문 배송 정보 무단 변조
-30. **HTTP Parameter Pollution (HPP)** (`HPP`) - 중복 파라미터를 통한 주문 상태 조작
-31. **BOLA / IDOR (타인 배송지 주소록)** (`BOLA_ADDRESS`) - 타인 배송지 원장 무단 조회/수정/삭제
-32. **BOLA / IDOR (타인 장바구니)** (`BOLA_CART`) - 타인 장바구니 품목 변조 및 삭제
-33. **통합 관리자 포털 권한 우회** (`ADMIN_BYPASS`) - 내부 프록시 헤더 조작을 통한 Master 제어 콘솔 접근
-34. **VIP 전용관 BFLA 인가 우회** (`MEMBERSHIP_BFLA_BYPASS`) - 비구독자의 VIP 단독 특가 품목 무단 조회
-35. **커스텀 덱 BOLA / IDOR** (`WISHLIST_BOLA_IDOR`) - 비공개(Private) 기밀 덱 및 시크릿 메모 무단 열람
-36. **1:1 고객지원 티켓 BOLA / IDOR** (`INQUIRY_BOLA_IDOR`) - 타인의 비공개 불량 상담 티켓 무단 열람
-
-### WSTG-SESS & CLNT: 세션 및 클라이언트 취약점 (6개)
-37. **Cross-Site Request Forgery (CSRF)** (`CSRF`) - 이메일 강제 변경
-38. **DOM-Based XSS** (`XSS_DOM`) - 클라이언트 innerHTML을 통한 XSS
-39. **Open Redirect** (`OPEN_REDIRECT`) - 로그인 후 목적지 URL 화이트리스트 검증 부재
-40. **CSRF (지갑 잔액 무단 송금)** (`CSRF_WALLET`) - 사용자 모르게 공격자 계정으로 잔액 송금
-41. **커스텀 덱 소개글 Stored XSS** (`WISHLIST_STORED_XSS`) - 덱 이름 및 설명 비위생화 DOM 주입
-42. **룰렛 당첨 포인트 조작** (`ROULETTE_CLIENT_TAMPER`) - 클라이언트 전달 당첨 포인트 무검증 수용
-
-### WSTG-BUSL: 비즈니스 로직 결함 (13개)
-43. **Price Tampering (가격 조작)** (`PRICE_TAMPER`) - 결제 금액 클라이언트 값 신뢰
-44. **Negative Quantity (음수 수량)** (`NEG_QUANTITY`) - 장바구니 품목 음수 수량 주입
-45. **부동소수점 오차 포인트 차익거래** (`ROUNDING_ERROR`) - 잔액 환전 시 소수점 절삭 오차
-46. **동시성 Race Condition** (`RACE_CONDITION`) - 1회용 프로모션 쿠폰 동시 중복 사용
-47. **Workflow Step Skipping** (`WORKFLOW_SKIP`) - 주문 승인 단계 건너뛰기
-48. **지갑 음수 충전 결제 변조** (`WALLET_NEGATIVE_CHARGE`) - 잔액 충전 시 음수 금액 주입
-49. **프로모션 바우처 동시성 Race Condition** (`WALLET_RACE_CONDITION`) - 1회용 바우처 동시 다중 등록
-50. **멤버십 가입비 변조** (`MEMBERSHIP_PRICE_TAMPER`) - VIP 구독료 0원 및 음수 결제
-51. **VIP 쿠폰 동시성 Race Condition** (`MEMBERSHIP_COUPON_RACE`) - 5만원 VIP 바우처 무한 중복 발급
-52. **이중 환불 동시성 Race Condition** (`REFUND_RACE_CONDITION`) - 동일 주문 다중 환불 요청 잔액 증식
-53. **반품 검수 절차 우회** (`REFUND_WORKFLOW_BYPASS`) - 배송 완료 건 direct 우회 즉시 환불
-54. **출석체크 날짜 변조 및 중복 수령** (`ATTENDANCE_DATE_TAMPER`) - 임의 날짜 주입 및 동시 다중 출석
-55. **음수 포인트 복합 결제 악용** (`POINTS_NEGATIVE_EXPLOIT`) - pointsUsed 음수 주입 잔액 부당 증식
-56. **재고 초과 판매 레이스 컨디션** (`STOCK_RACE_CONDITION`) - 재고 1개 상품 동시 다중 결제
-
-### WSTG-INPV (추가): SSRF 및 파일 처리 (2개)
-57. **재입고 알림 콜백 Webhook SSRF** (`RESTOCK_WEBHOOK_SSRF`) - 재입고 Webhook URL 내부망 조회
-
-### WSTG-INPV (추가): 멤버십 및 환불 스토어드 XSS (2개)
-58. **VIP 프로필 환영글 Stored XSS** (`MEMBERSHIP_STORED_XSS`) - 소개글 innerHTML 주입
-59. **환불 사유 및 메모 Stored XSS** (`REFUND_STORED_XSS`) - 관리자 포털 및 주문서 XSS
-
-### WSTG-INFO & CONF: 정보 노출 및 WAF 설정 (2개)
-60. **엔터프라이즈 WAF 우회** (`WAF_BYPASS`) - X-Forwarded-For 및 X-Admin-Role 스푸핑
-61. **민감정보 노출** (`INFO_EXPOSURE`) - `.env`, `.git/HEAD`, `backup.sql` 유출
+| 번호 | WSTG ID | 취약점 키 (Key) | 취약점 명칭 | 분류 |
+|:---:|:---|:---|:---|:---|
+| 1 | WSTG-INPV-05 | `SQLI_LIKE` | SQL Injection - LIKE 문자열 결합 | Injection |
+| 2 | WSTG-INPV-05 | `SQLI_UNION` | SQL Injection - UNION-Based | Injection |
+| 3 | WSTG-INPV-05 | `SQLI_ORDERBY` | SQL Injection - ORDER BY Blind | Injection |
+| 4 | WSTG-INPV-05 | `SQLI_BOOL_BLIND` | SQL Injection - Boolean-Based Blind | Injection |
+| 5 | WSTG-INPV-05 | `SQLI_TIME_BLIND` | SQL Injection - Time-Based Blind | Injection |
+| 6 | WSTG-INPV-05 | `SQLI_SECOND` | Second-Order SQL Injection | Injection |
+| 7 | WSTG-INPV-01 | `XSS_REFLECTED` | Reflected XSS (HTML 응답) | XSS |
+| 8 | WSTG-INPV-02 | `XSS_STORED_REVIEW` | Stored XSS (리뷰 댓글) | XSS |
+| 9 | WSTG-INPV-02 | `XSS_STORED_INQ` | Stored XSS (문의글) | XSS |
+| 10 | WSTG-INPV-09 | `PATH_TRAVERSAL` | Path Traversal (임의 파일 읽기) | Injection |
+| 11 | WSTG-INPV-07 | `XXE` | XML External Entity (XXE) | Injection |
+| 12 | WSTG-INPV-18 | `SSTI` | Server-Side Template Injection (SpEL) | Injection |
+| 13 | WSTG-INPV-12 | `CMD_INJECTION` | Command Injection (OS 명령 실행) | Injection |
+| 14 | WSTG-INPV-19 | `SSRF` | SSRF (서버 사이드 요청 위조) | Injection |
+| 15 | WSTG-INPV-12 | `ZIP_SLIP` | Zip Slip (경로 탈출) | Injection |
+| 16 | WSTG-INPV-15 | `CRLF_LOG` | CRLF / Log Injection | Injection |
+| 17 | WSTG-CRYP-02 | `AES_ECB` | AES-ECB 모드 블록 셔플링 | Crypto |
+| 18 | WSTG-CRYP-03 | `PREDICTABLE_TOKEN` | 취약한 비밀번호 재설정 토큰 | Crypto |
+| 19 | WSTG-ATHN-08 | `JWT_CONFUSION` | JWT Algorithm Confusion | Auth |
+| 20 | WSTG-ATHN-02 | `USER_ENUM` | 계정 열거 (Username Enumeration) | Auth |
+| 21 | WSTG-ATHN-08 | `MASS_ASSIGN_PROFILE` | Mass Assignment (프로필 권한 상승) | Auth |
+| 22 | WSTG-ATHN-08 | `MASS_ASSIGN_REG` | Mass Assignment (회원가입 권한 지정) | Auth |
+| 23 | WSTG-ATHZ-04 | `BOLA_READ` | BOLA/IDOR (타인 주문 조회) | Auth |
+| 24 | WSTG-ATHZ-04 | `BOLA_WRITE` | BOLA/IDOR (타인 배송지 변경) | Auth |
+| 25 | WSTG-ATHZ-04 | `HPP` | HTTP Parameter Pollution | Auth |
+| 26 | WSTG-SESS-05 | `CSRF` | CSRF (이메일 강제 변경) | Client |
+| 27 | WSTG-CLNT-01 | `XSS_DOM` | DOM-Based XSS | Client |
+| 28 | WSTG-CLNT-04 | `OPEN_REDIRECT` | Open Redirect | Client |
+| 29 | WSTG-BUSL-09 | `PRICE_TAMPER` | Price Tampering (가격 조작) | BizLogic |
+| 30 | WSTG-BUSL-09 | `NEG_QUANTITY` | Negative Quantity (음수 수량) | BizLogic |
+| 31 | WSTG-BUSL-03 | `ROUNDING_ERROR` | 부동소수점 오차 포인트 차익거래 | BizLogic |
+| 32 | WSTG-BUSL-04 | `RACE_CONDITION` | 동시성 Race Condition | BizLogic |
+| 33 | WSTG-BUSL-02 | `WORKFLOW_SKIP` | Workflow Step Skipping | BizLogic |
+| 34 | WSTG-CONF-05 | `WAF_BYPASS` | 엔터프라이즈 WAF 우회 | Config |
+| 35 | WSTG-INFO-05 | `INFO_EXPOSURE` | 민감정보 노출 (.env/.git/backup.sql) | Config |
+| 36 | WSTG-INPV-12 | `FILE_UPLOAD` | 무제한 파일 업로드 | Injection |
+| 37 | WSTG-ATHZ-04 | `BOLA_ADDRESS` | BOLA/IDOR (타인 배송지 조회/수정/삭제) | Auth |
+| 38 | WSTG-INPV-02 | `XSS_STORED_ADDRESS` | Stored XSS (배송지 및 배송 메모) | XSS |
+| 39 | WSTG-INPV-05 | `SQLI_ADDRESS` | SQL Injection (주소 및 우편번호 검색) | Injection |
+| 40 | WSTG-BUSL-09 | `WALLET_NEGATIVE_CHARGE` | 결제 금액 음수 충전 및 PG 변조 | BizLogic |
+| 41 | WSTG-BUSL-04 | `WALLET_RACE_CONDITION` | 바우처 동시성 Race Condition | BizLogic |
+| 42 | WSTG-SESS-05 | `CSRF_WALLET` | CSRF (지갑 잔액 무단 송금) | Client |
+| 43 | WSTG-INPV-02 | `XSS_STORED_CART` | Stored XSS (장바구니 요청 메모) | XSS |
+| 44 | WSTG-ATHZ-04 | `BOLA_CART` | BOLA/IDOR (타인 장바구니 품목 변조/삭제) | Auth |
+| 45 | WSTG-ATHZ-02 | `ADMIN_BYPASS` | 통합 관리자 포털 권한 우회 | Auth |
+| 46 | WSTG-BUSL-09 | `MEMBERSHIP_PRICE_TAMPER` | Membership Price Tampering (가입 금액 변조) | BizLogic |
+| 47 | WSTG-ATHZ-02 | `MEMBERSHIP_BFLA_BYPASS` | VIP Exclusive Deals BFLA (인가 우회) | Auth |
+| 48 | WSTG-BUSL-04 | `MEMBERSHIP_COUPON_RACE` | VIP Coupon Race Condition (쿠폰 무한 중복 발급) | BizLogic |
+| 49 | WSTG-INPV-02 | `MEMBERSHIP_STORED_XSS` | Membership Welcome Note Stored XSS | XSS |
+| 50 | WSTG-BUSL-04 | `REFUND_RACE_CONDITION` | Double Refund Concurrency Race Condition (이중 환불) | BizLogic |
+| 51 | WSTG-BUSL-02 | `REFUND_WORKFLOW_BYPASS` | Refund State & Workflow Step Skipping (반품 검수 우회) | BizLogic |
+| 52 | WSTG-INPV-02 | `REFUND_STORED_XSS` | Refund Reason & Memo Stored XSS | XSS |
+| 53 | WSTG-ATHZ-04 | `WISHLIST_BOLA_IDOR` | Wishlist & Custom Deck BOLA/IDOR (비공개 덱 무단 열람) | Auth |
+| 54 | WSTG-INPV-02 | `WISHLIST_STORED_XSS` | Custom Deck Name & Description Stored XSS | XSS |
+| 55 | WSTG-BUSL-04 | `ATTENDANCE_DATE_TAMPER` | Attendance Check-in Date Manipulation & Multi-Claim Race | BizLogic |
+| 56 | WSTG-CLNT-01 | `ROULETTE_CLIENT_TAMPER` | Roulette Client-Side Prize Manipulation | Client |
+| 57 | WSTG-BUSL-09 | `POINTS_NEGATIVE_EXPLOIT` | Negative Points Usage & Compound Payment Tampering | BizLogic |
+| 58 | WSTG-ATHZ-04 | `INQUIRY_BOLA_IDOR` | BOLA/IDOR on Support Ticket & Secret Inquiries | Auth |
+| 59 | WSTG-INPV-12 | `TICKET_FILE_UPLOAD` | Unrestricted File Upload on Support Tickets | Injection |
+| 60 | WSTG-BUSL-04 | `STOCK_RACE_CONDITION` | Inventory Overselling Concurrency Race Condition | BizLogic |
+| 61 | WSTG-INPV-19 | `RESTOCK_WEBHOOK_SSRF` | Restock Notification Callback SSRF | Injection |
 
 ---
 
 ## 5. 실시간 스코어보드 & CTF 플래그 시스템
-
----
-
-## 4. 실시간 스코어보드 & CTF 플래그 시스템
 
 Vuln-Mall은 사용자가 취약점을 성공적으로 익스플로잇할 때 즉각적인 피드백을 제공받을 수 있도록 내장 스코어보드를 지원합니다.
 
@@ -181,7 +164,7 @@ Vuln-Mall은 사용자가 취약점을 성공적으로 익스플로잇할 때 �
 
 ---
 
-## 5. 디렉터리 구조
+## 6. 디렉터리 구조
 
 ```
 NexusTech/
@@ -199,12 +182,13 @@ NexusTech/
 │               ├── application-h2.yml # H2 인메모리 데이터소스 설정
 │               ├── schema-h2.sql    # H2 스키마 및 호환 함수 정의
 │               └── static/          # 바닐라 JS/HTML/CSS 프론트엔드 리소스
-└── README.md
+├── WALKTHROUGH.md                  # 전체 61개 취약점 실습 및 PoC 상세 가이드
+└── README.md                       # 프로젝트 소개 및 취약점 카탈로그
 ```
 
 ---
 
-## 6. 법적 고지 (Disclaimer)
+## 7. 법적 고지 (Disclaimer)
 
 본 소프트웨어는 **보안 교육, 공인된 모의해킹 훈련, 보안 취약점 연구 및 DAST 진단 도구 벤치마크 평가**를 위한 목적으로 제작되었습니다. 
 

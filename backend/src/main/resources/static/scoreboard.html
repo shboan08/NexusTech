@@ -361,11 +361,11 @@
                 <div>
                     <div class="stats-title">실시간 취약점 공략 진척도</div>
                     <div style="font-size: 0.85rem; color: var(--text-sub); margin-top: 4px;">
-                        총 36개 고난도 취약점 중 현재 발견된 항목 수입니다.
+                        총 61개 고난도 취약점 중 현재 발견된 항목 수입니다.
                     </div>
                 </div>
                 <div class="stats-score">
-                    <span id="foundCount">0</span> / <span id="totalCount">36</span> 
+                    <span id="foundCount">0</span> / <span id="totalCount">61</span> 
                     <span style="font-size: 1.2rem; color: var(--text-sub);" id="percentText">(0%)</span>
                 </div>
             </div>
@@ -375,14 +375,14 @@
             </div>
 
             <div class="category-filters" id="categoryFilters">
-                <div class="filter-chip active" onclick="filterCategory('ALL')">전체보기</div>
-                <div class="filter-chip" onclick="filterCategory('Injection')">Injection (11)</div>
-                <div class="filter-chip" onclick="filterCategory('XSS')">XSS (3)</div>
-                <div class="filter-chip" onclick="filterCategory('Auth')">Auth/Access (6)</div>
-                <div class="filter-chip" onclick="filterCategory('Crypto')">Crypto (2)</div>
-                <div class="filter-chip" onclick="filterCategory('BizLogic')">Business Logic (5)</div>
-                <div class="filter-chip" onclick="filterCategory('Client')">Client-Side (3)</div>
-                <div class="filter-chip" onclick="filterCategory('Config')">Config/Exposure (2)</div>
+                <div class="filter-chip active" onclick="filterCategory('ALL')">전체보기 (<span id="catCountALL">61</span>)</div>
+                <div class="filter-chip" onclick="filterCategory('Injection')">Injection (<span id="catCountInjection">17</span>)</div>
+                <div class="filter-chip" onclick="filterCategory('XSS')">XSS (<span id="catCountXSS">8</span>)</div>
+                <div class="filter-chip" onclick="filterCategory('Auth')">Auth/Access (<span id="catCountAuth">13</span>)</div>
+                <div class="filter-chip" onclick="filterCategory('Crypto')">Crypto (<span id="catCountCrypto">2</span>)</div>
+                <div class="filter-chip" onclick="filterCategory('BizLogic')">Business Logic (<span id="catCountBizLogic">14</span>)</div>
+                <div class="filter-chip" onclick="filterCategory('Client')">Client-Side (<span id="catCountClient">5</span>)</div>
+                <div class="filter-chip" onclick="filterCategory('Config')">Config/Exposure (<span id="catCountConfig">2</span>)</div>
             </div>
         </div>
 
@@ -429,6 +429,16 @@
                 document.getElementById('progressBar').style.width = `${data.progressPercent}%`;
 
                 allVulns = data.vulnerabilities || [];
+                if (allVulns.length > 0) {
+                    const catCounts = { ALL: allVulns.length, Injection: 0, XSS: 0, Auth: 0, Crypto: 0, BizLogic: 0, Client: 0, Config: 0 };
+                    allVulns.forEach(v => {
+                        if (catCounts[v.category] !== undefined) catCounts[v.category]++;
+                    });
+                    for (const [c, cnt] of Object.entries(catCounts)) {
+                        const el = document.getElementById(`catCount${c}`);
+                        if (el) el.innerText = cnt;
+                    }
+                }
                 renderTable();
             } catch (err) {
                 console.error('Failed to load scoreboard:', err);
