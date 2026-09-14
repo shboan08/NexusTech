@@ -31,6 +31,14 @@ public class InquiryRepository {
             inq.setTitle(rs.getString("title"));
             inq.setContent(rs.getString("content"));
             inq.setIsSecret(rs.getBoolean("is_secret"));
+            try {
+                inq.setCategory(rs.getString("category"));
+                inq.setOrderId(rs.getObject("order_id") != null ? rs.getLong("order_id") : null);
+                inq.setAttachmentUrl(rs.getString("attachment_url"));
+                inq.setStatus(rs.getString("status"));
+                inq.setAdminReply(rs.getString("admin_reply"));
+                inq.setRepliedAt(rs.getTimestamp("replied_at"));
+            } catch (SQLException ignored) {}
             inq.setCreatedAt(rs.getTimestamp("created_at"));
             return inq;
         }
@@ -45,8 +53,18 @@ public class InquiryRepository {
         return jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
     }
 
+    public Long createSupportTicket(Long userId, String username, String title, String content, String category, Long orderId, String attachmentUrl, boolean isSecret) {
+        String sql = "INSERT INTO inquiries (user_id, username, title, content, category, order_id, attachment_url, status, is_secret) VALUES (?, ?, ?, ?, ?, ?, ?, 'OPEN', ?)";
+        jdbcTemplate.update(sql, userId, username, title, content, category, orderId, attachmentUrl, isSecret);
+        return jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
+    }
+
     public List<Inquiry> findAll() {
         return jdbcTemplate.query("SELECT * FROM inquiries ORDER BY id DESC", inquiryRowMapper);
+    }
+
+    public List<Inquiry> findByUserId(Long userId) {
+        return jdbcTemplate.query("SELECT * FROM inquiries WHERE user_id = ? ORDER BY id DESC", inquiryRowMapper, userId);
     }
 
     public Optional<Inquiry> findById(Long id) {
@@ -55,6 +73,11 @@ public class InquiryRepository {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    public void updateAdminReply(Long id, String reply, String status) {
+        String sql = "UPDATE inquiries SET admin_reply = ?, status = ?, replied_at = CURRENT_TIMESTAMP WHERE id = ?";
+        jdbcTemplate.update(sql, reply, status != null ? status : "RESOLVED", id);
     }
 
     /**

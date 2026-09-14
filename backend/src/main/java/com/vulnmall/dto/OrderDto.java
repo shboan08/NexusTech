@@ -10,6 +10,7 @@ public class OrderDto {
         private String phone;
         private BigDecimal totalAmount; // [비즈니스 로직 결함] 서버 재계산 없이 클라이언트 전달 금액 신뢰
         private String couponCode;
+        private Integer pointsUsed;
 
         public String getRecipientName() { return recipientName; }
         public void setRecipientName(String recipientName) { this.recipientName = recipientName; }
@@ -21,6 +22,8 @@ public class OrderDto {
         public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
         public String getCouponCode() { return couponCode; }
         public void setCouponCode(String couponCode) { this.couponCode = couponCode; }
+        public Integer getPointsUsed() { return pointsUsed; }
+        public void setPointsUsed(Integer pointsUsed) { this.pointsUsed = pointsUsed; }
     }
 
     public static class UpdateShippingRequest {

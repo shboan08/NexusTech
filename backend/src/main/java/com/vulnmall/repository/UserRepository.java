@@ -30,6 +30,13 @@ public class UserRepository {
             u.setEmail(rs.getString("email"));
             u.setRole(rs.getString("role"));
             u.setBalance(rs.getBigDecimal("balance"));
+            try {
+                u.setPoints(rs.getInt("points"));
+                u.setMembershipTier(rs.getString("membership_tier"));
+                u.setMembershipActive(rs.getBoolean("membership_active"));
+                u.setMembershipWelcomeNote(rs.getString("membership_welcome_note"));
+                u.setMembershipExpiresAt(rs.getTimestamp("membership_expires_at"));
+            } catch (SQLException ignored) {}
             u.setAvatarUrl(rs.getString("avatar_url"));
             u.setSecurityQuestion(rs.getString("security_question"));
             u.setSecurityAnswer(rs.getString("security_answer"));
@@ -93,5 +100,29 @@ public class UserRepository {
 
     public List<User> findAll() {
         return jdbcTemplate.query("SELECT * FROM users ORDER BY id ASC", userRowMapper);
+    }
+
+    public void deleteUser(Long id) {
+        jdbcTemplate.update("DELETE FROM users WHERE id = ?", id);
+    }
+
+    public void updateRoleAndBalance(Long id, String role, java.math.BigDecimal balance) {
+        String sql = "UPDATE users SET role = ?, balance = ? WHERE id = ?";
+        jdbcTemplate.update(sql, role, balance, id);
+    }
+
+    public void updateMembership(Long id, String tier, Boolean active, String welcomeNote, java.sql.Timestamp expiresAt) {
+        String sql = "UPDATE users SET membership_tier = ?, membership_active = ?, membership_welcome_note = ?, membership_expires_at = ? WHERE id = ?";
+        jdbcTemplate.update(sql, tier, active, welcomeNote, expiresAt, id);
+    }
+
+    public void updatePoints(Long userId, int points) {
+        String sql = "UPDATE users SET points = ? WHERE id = ?";
+        jdbcTemplate.update(sql, points, userId);
+    }
+
+    public void addPoints(Long userId, int pointsDelta) {
+        String sql = "UPDATE users SET points = COALESCE(points, 0) + ? WHERE id = ?";
+        jdbcTemplate.update(sql, pointsDelta, userId);
     }
 }

@@ -47,10 +47,20 @@
                     <div class="user-chip" onclick="app.openMyPageModal()">
                         <span class="user-avatar" id="navUserAvatar">👤</span>
                         <div class="user-meta">
-                            <span class="user-name" id="navUsername">User</span>
-                            <span class="user-balance" id="navUserBalance">₩0</span>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span class="user-name" id="navUsername">User</span>
+                                <span class="vip-badge" id="navVipBadge" style="display:none;">👑 PRIME</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="user-balance" id="navUserBalance">₩0</span>
+                                <span class="points-pill" style="font-size:0.75rem; padding: 2px 8px; cursor:pointer;" onclick="event.stopPropagation(); app.openRouletteModal();" title="보유 포인트 및 출석/룰렛">🪙 <span id="navUserPoints">0</span> P</span>
+                            </div>
                         </div>
                     </div>
+                    <button class="btn btn-outline btn-sm" onclick="app.openRouletteModal()" title="일일 출석체크 & 사이버 룰렛">🎡 출석/룰렛</button>
+                    <button class="btn nav-vip-btn btn-sm" onclick="app.openMembershipModal()" title="NEXUS PRIME VIP 멤버십">👑 PRIME</button>
+                    <button class="btn btn-primary btn-sm" onclick="app.openChargeModal()" title="잔액 충전">+ 충전</button>
+                    <a href="/admin.html" class="btn btn-outline btn-sm" id="navAdminBtn" style="display:none;" title="관리자 제어 포털">관리자</a>
                     <button class="btn btn-icon" title="내 주문 및 프로필" onclick="app.openMyPageModal()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     </button>
@@ -59,6 +69,7 @@
                     </button>
                 </div>
 
+                <button class="btn btn-outline" onclick="app.openWishlistModal()" title="위시리스트 & 커스텀 덱">❤️ 찜 (<span id="navWishlistCount">0</span>)</button>
                 <button class="btn btn-outline" onclick="app.openInquiryModal()" title="1:1 문의">Q&A</button>
 
                 <button class="cart-btn" onclick="app.openCartModal()" aria-label="장바구니">
@@ -82,7 +93,7 @@
                 <p class="hero-desc">초저지연 뇌파 인터페이스, 양자 프로세서 덱, 군사 등급 암호화 스토리지를 공식 취급하는 글로벌 사이버 테크 플랫폼입니다.</p>
                 <div class="hero-cta">
                     <button class="btn btn-primary btn-lg" onclick="app.scrollToProducts()">컬렉션 탐색</button>
-                    <button class="btn btn-glass btn-lg" onclick="app.quickFilter('Laptops')">양자 덱 보기</button>
+                    <button class="btn nav-vip-btn btn-lg" onclick="app.openMembershipModal()">👑 PRIME 멤버십</button>
                 </div>
             </div>
             <div class="hero-visual">
@@ -102,6 +113,7 @@
             <div class="catalog-header">
                 <div class="category-tabs">
                     <button class="tab-btn active" data-category="ALL" onclick="app.filterCategory('ALL')">전체보기</button>
+                    <button class="tab-btn vip-tab" data-category="VIP_EXCLUSIVE" onclick="app.filterCategory('VIP_EXCLUSIVE')">👑 VIP 전용관</button>
                     <button class="tab-btn" data-category="Laptops" onclick="app.filterCategory('Laptops')">Laptops</button>
                     <button class="tab-btn" data-category="Wearables" onclick="app.filterCategory('Wearables')">Wearables</button>
                     <button class="tab-btn" data-category="Smartphones" onclick="app.filterCategory('Smartphones')">Smartphones</button>
@@ -167,6 +179,14 @@
                         <span>쿠폰 할인</span>
                         <span class="text-danger" id="cartDiscount">-₩0</span>
                     </div>
+                    <div class="summary-row">
+                        <span>배송비</span>
+                        <span id="cartShippingFee">₩3,000</span>
+                    </div>
+                    <div class="summary-row" id="vipFreeShippingRow" style="display:none;">
+                        <span class="text-success">👑 PRIME VIP 무료배송</span>
+                        <span class="text-success" id="cartVipShippingDiscount">-₩3,000</span>
+                    </div>
                     <div class="summary-row total-row">
                         <span>총 결제 예상 금액</span>
                         <span class="total-price" id="cartFinalTotal">₩0</span>
@@ -190,6 +210,15 @@
             <div class="modal-body">
                 <form id="checkoutForm" onsubmit="event.preventDefault(); app.submitCheckout();">
                     <div class="form-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label style="margin:0;">배송지 선택</label>
+                            <button type="button" class="btn btn-ghost btn-sm" onclick="app.openAddressModal()">+ 새 배송지 등록</button>
+                        </div>
+                        <select id="checkoutAddressSelect" class="form-control" onchange="app.handleSelectSavedAddress(this.value)" style="width:100%; padding:10px; background:#101522; color:#fff; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                            <option value="">직접 입력</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>받는 분 성함</label>
                         <input type="text" id="shipRecipient" required placeholder="수령인 성명">
                     </div>
@@ -203,15 +232,38 @@
                     </div>
                     <div class="form-group">
                         <label>결제 승인 금액 (₩)</label>
-                        <input type="number" id="shipTotalAmount" step="1" required>
+                        <input type="number" id="shipTotalAmount" step="1" required oninput="app.updateCheckoutCalculations()">
+                    </div>
+                    <div class="form-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label style="margin:0;">포인트 복합 결제 사용 (P)</label>
+                            <span style="font-size:0.8rem; color:#ffd700;">보유: <span id="checkoutUserPoints">0</span> P</span>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:6px;">
+                            <input type="number" id="checkoutPointsUsed" value="0" placeholder="사용할 포인트 (1P = 1원)" oninput="app.updateCheckoutCalculations()">
+                            <button type="button" class="btn btn-glass btn-sm" onclick="app.applyMaxPoints()">전액사용</button>
+                        </div>
+                        <span style="font-size:0.75rem; color:var(--text-muted);">* 포인트는 1P 단위로 사용 가능하며 결제액의 1%가 캐시백 적립됩니다.</span>
                     </div>
                     <div class="payment-info-box">
                         <div class="info-row">
-                            <span>보유 잔액:</span>
+                            <span>배송비 혜택:</span>
+                            <span id="checkoutShippingNotice" style="color:var(--text-secondary);">₩3,000 (일반 배송)</span>
+                        </div>
+                        <div class="info-row">
+                            <span>포인트 사용 차감:</span>
+                            <span id="checkoutPointsDiscount" style="color:#ffd700;">- 0 P</span>
+                        </div>
+                        <div class="info-row">
+                            <span>최종 잔액 결제액:</span>
+                            <strong id="checkoutFinalAmount" style="color:var(--accent-cyan);">₩0</strong>
+                        </div>
+                        <div class="info-row">
+                            <span>보유 지갑 잔액:</span>
                             <strong id="checkoutUserBalance">₩0</strong>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">보유 잔액으로 전액 결제</button>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">최종 결제 승인 요청</button>
                 </form>
             </div>
         </div>
@@ -288,6 +340,90 @@
         </div>
     </div>
 
+    <!-- NEXUS PRIME VIP Membership Modal -->
+    <div class="modal" id="membershipModal">
+        <div class="modal-backdrop" onclick="app.closeModal('membershipModal')"></div>
+        <div class="modal-dialog modal-lg">
+            <button class="modal-close" onclick="app.closeModal('membershipModal')">&times;</button>
+            <div class="modal-header">
+                <h2>👑 NEXUS <span class="vip-gold-gradient">PRIME VIP</span> 멤버십</h2>
+            </div>
+            <div class="modal-body">
+                <div class="vip-card-banner">
+                    <span class="vip-badge mb-2">EXCLUSIVE MEMBERSHIP</span>
+                    <h3 style="font-size:1.5rem; margin-top:8px;">최상위 테크 엔지니어를 위한 프레스티지 구독</h3>
+                    <p style="color:var(--text-secondary); font-size:0.95rem; margin-top:6px;">
+                        초저지연 양자 하드웨어 우선 배정, 전 품목 무료 배송, VIP 시크릿 특가관 접근 및 월간 ₩50,000 전용 바우처를 누리세요.
+                    </p>
+                    <div class="vip-perks-grid">
+                        <div class="vip-perk-card">
+                            <span class="vip-perk-icon">🚚</span>
+                            <div class="vip-perk-title">전 상품 무료배송</div>
+                            <div class="vip-perk-desc">구매 금액 제한 없이 모든 주문 건에 대해 배송비 ₩3,000 자동 면제</div>
+                        </div>
+                        <div class="vip-perk-card">
+                            <span class="vip-perk-icon">🎟️</span>
+                            <div class="vip-perk-title">₩50,000 전용 바우처</div>
+                            <div class="vip-perk-desc">매월 1회 즉시 사용 가능한 ₩50,000 VIP 할인 쿠폰 자동 발급</div>
+                        </div>
+                        <div class="vip-perk-card">
+                            <span class="vip-perk-icon">⚡</span>
+                            <div class="vip-perk-title">시크릿 특가관 접근</div>
+                            <div class="vip-perk-desc">일반 회원은 볼 수 없는 최대 60% 단독 비공개 특가 품목 구매 가능</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active VIP Member Pane -->
+                <div id="membershipActivePane" style="display:none;">
+                    <div class="card-glass p-3 mb-3" style="border: 1px solid rgba(255,215,0,0.3);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                            <div>
+                                <span class="vip-badge">👑 PRIME VIP ACTIVE</span>
+                                <h4 class="mt-2" style="font-size:1.2rem; color:#ffd700;" id="vipUsernameDisplay">회원님은 VIP 멤버입니다</h4>
+                                <p style="font-size:0.85rem; color:var(--text-secondary);">만료일: <strong id="vipExpiresAtDisplay">-</strong></p>
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" class="btn nav-vip-btn" onclick="app.claimVipCoupon()">🎟️ ₩50,000 바우처 수령</button>
+                                <button type="button" class="btn btn-ghost text-danger" onclick="app.cancelMembership()">구독 해지</button>
+                            </div>
+                        </div>
+                        <div class="mt-3 p-2" style="background:rgba(0,0,0,0.3); border-radius:var(--radius-sm);">
+                            <span style="font-size:0.8rem; color:var(--text-muted);">VIP 프로필 환영 인사말:</span>
+                            <div id="vipWelcomeNoteDisplay" style="color:var(--text-primary); font-size:0.9rem; margin-top:4px;">-</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline btn-block" onclick="app.filterCategory('VIP_EXCLUSIVE'); app.closeModal('membershipModal'); app.scrollToProducts();">👑 VIP 시크릿 특가관 바로가기</button>
+                </div>
+
+                <!-- Subscription Form Pane (for non-members) -->
+                <div id="membershipSubscribePane">
+                    <form onsubmit="event.preventDefault(); app.submitMembershipSubscribe();">
+                        <div class="form-group">
+                            <label>구독 멤버십 플랜</label>
+                            <input type="text" id="membershipTierInput" value="PRIME" readonly style="background:rgba(255,255,255,0.05); color:#ffd700; font-weight:700;">
+                        </div>
+                        <div class="form-group">
+                            <label>월 구독료 (₩) <span style="font-size:0.8rem; color:var(--text-muted);">(정상가 ₩9,900/월)</span></label>
+                            <input type="number" id="membershipPriceInput" value="9900" required>
+                        </div>
+                        <div class="form-group">
+                            <label>VIP 프로필 소개글 / 환영 인사말</label>
+                            <input type="text" id="membershipWelcomeInput" placeholder="예: 차세대 퀀텀 해킹 연구원 앨리스입니다." value="NEXUS PRIME VIP 정회원 승인 완료">
+                        </div>
+                        <div class="payment-info-box mb-3">
+                            <div class="info-row">
+                                <span>현재 보유 잔액:</span>
+                                <strong id="membershipUserBalance">₩0</strong>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn nav-vip-btn btn-block btn-lg" style="font-size:1rem; font-weight:700;">👑 NEXUS PRIME ₩9,900 결제 및 가입하기</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- My Page & Orders Modal -->
     <div class="modal" id="myPageModal">
         <div class="modal-backdrop" onclick="app.closeModal('myPageModal')"></div>
@@ -305,7 +441,15 @@
                             <div class="profile-field"><span>아이디:</span> <strong id="profileUsername">-</strong></div>
                             <div class="profile-field"><span>이메일:</span> <strong id="profileEmail">-</strong></div>
                             <div class="profile-field"><span>계정 등급:</span> <span class="badge" id="profileRole">USER</span></div>
-                            <div class="profile-field"><span>보유 포인트/잔액:</span> <strong class="text-success" id="profileBalance">₩0</strong></div>
+                            <div class="profile-field"><span>멤버십:</span> <span id="profileMembershipTier" class="vip-badge" style="display:inline-block;">NONE</span></div>
+                            <div class="profile-field" id="profileWelcomeRow" style="display:none;">
+                                <span>VIP 메시지:</span>
+                                <div id="profileWelcomeNote" style="font-size:0.85rem; color:#ffd700; word-break:break-all;"></div>
+                            </div>
+                            <div class="profile-field" style="display:flex; justify-content:space-between; align-items:center;">
+                                <div><span>보유 잔액:</span> <strong class="text-success" id="profileBalance">₩0</strong></div>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="app.openChargeModal()">+ 충전하기</button>
+                            </div>
                         </div>
                         <hr class="divider">
                         <h4>프로필 및 설정 변경</h4>
@@ -330,6 +474,17 @@
                     <div class="orders-box">
                         <h3>최근 주문 내역</h3>
                         <div class="order-list" id="myOrderList">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Address Management Section -->
+                    <div class="card-glass mt-3 p-3" style="grid-column: 1 / -1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h3 style="margin:0; font-size:1.1rem; color:var(--accent-cyan);">📍 나의 배송지 주소록 관리</h3>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="app.openAddressModal()">+ 신규 배송지 추가</button>
+                        </div>
+                        <div id="myAddressList" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
                             <!-- Injected by JS -->
                         </div>
                     </div>
@@ -360,32 +515,336 @@
         </div>
     </div>
 
-    <!-- 1:1 Q&A Inquiry Board Modal -->
+    <!-- Wishlist & Custom Deck Modal -->
+    <div class="modal" id="wishlistModal">
+        <div class="modal-backdrop" onclick="app.closeModal('wishlistModal')"></div>
+        <div class="modal-dialog modal-lg">
+            <button class="modal-close" onclick="app.closeModal('wishlistModal')">&times;</button>
+            <div class="modal-header">
+                <h2>❤️ 위시리스트 및 <span class="text-gradient">사이버 커스텀 덱</span></h2>
+            </div>
+            <div class="modal-body">
+                <div class="category-tabs mb-3">
+                    <button class="tab-btn active" id="tabWishlistBtn" onclick="app.switchWishlistTab('items')">❤️ 찜 목록 (<span id="wishlistCount">0</span>)</button>
+                    <button class="tab-btn" id="tabDecksBtn" onclick="app.switchWishlistTab('decks')">🛠️ 나만의 덱 관리</button>
+                    <button class="tab-btn" id="tabCreateDeckBtn" onclick="app.switchWishlistTab('create')">+ 새 덱 만들기</button>
+                </div>
+
+                <!-- 1. Wishlist Items Pane -->
+                <div id="wishlistItemsPane">
+                    <div id="wishlistItemsList" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px;">
+                        <p class="text-muted">찜한 상품을 불러오는 중...</p>
+                    </div>
+                </div>
+
+                <!-- 2. My Decks Pane -->
+                <div id="wishlistDecksPane" style="display:none;">
+                    <div id="myDecksList">
+                        <p class="text-muted">커스텀 덱을 불러오는 중...</p>
+                    </div>
+                </div>
+
+                <!-- 3. Create Deck Pane -->
+                <div id="wishlistCreatePane" style="display:none;">
+                    <div class="card-glass p-3">
+                        <h4>새로운 사이버 하드웨어 덱 구성</h4>
+                        <form onsubmit="event.preventDefault(); app.submitCreateDeck();">
+                            <div class="form-group">
+                                <label>덱 명칭 (Deck Name)</label>
+                                <input type="text" id="deckNameInput" required placeholder="예: 레드팀 침투 작전용 덱 V1">
+                            </div>
+                            <div class="form-group">
+                                <label>덱 소개 설명 (Public Description)</label>
+                                <textarea id="deckDescInput" rows="2" placeholder="이 덱의 하드웨어 구성 및 목적을 설명하세요."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>비공개 기밀 메모 (Secret Note) <span style="font-size:0.8rem; color:var(--text-muted);">(비공개 덱에만 저장되는 기밀 메모)</span></label>
+                                <input type="text" id="deckSecretNoteInput" placeholder="예: 비공개 루트킷 및 마스터 키 정보">
+                            </div>
+                            <div class="form-group">
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                    <input type="checkbox" id="deckIsPublicCheck" checked>
+                                    <span>공개 덱 (체크 해제 시 나만 볼 수 있는 비공개 기밀 덱으로 저장됩니다)</span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>포함할 찜 상품 선택</label>
+                                <div id="deckProductChecklist" style="display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto; padding:8px; background:rgba(0,0,0,0.3); border-radius:var(--radius-sm);">
+                                    <span class="text-muted">찜한 상품이 여기에 표시됩니다.</span>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">🛠️ 커스텀 덱 생성 및 공유 링크 발급</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Refund Modal -->
+    <div class="modal" id="refundModal">
+        <div class="modal-backdrop" onclick="app.closeModal('refundModal')"></div>
+        <div class="modal-dialog modal-md">
+            <button class="modal-close" onclick="app.closeModal('refundModal')">&times;</button>
+            <div class="modal-header">
+                <h2>주문 취소 및 환불 신청</h2>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="event.preventDefault(); app.submitRefundRequest();">
+                    <input type="hidden" id="refundOrderId">
+                    <div class="payment-info-box mb-3">
+                        <div class="info-row">
+                            <span>대상 주문번호:</span>
+                            <strong id="refundOrderDisplay">#0</strong>
+                        </div>
+                        <div class="info-row">
+                            <span>환불 예상 금액:</span>
+                            <strong class="text-success" id="refundAmountDisplay">₩0</strong>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>환불 및 반품 사유</label>
+                        <select id="refundReasonSelect" class="form-control" style="width:100%; padding:10px; background:#101522; color:#fff; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                            <option value="고객 단순 변심">고객 단순 변심</option>
+                            <option value="제품 불량 및 파손">제품 불량 및 파손</option>
+                            <option value="배송 지연">배송 지연</option>
+                            <option value="타 제품으로 교환 희망">타 제품으로 교환 희망</option>
+                            <option value="기타 사유">기타 사유</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>상세 환불 사유 메모</label>
+                        <textarea id="refundReasonDetails" rows="3" placeholder="환불 요청에 관한 상세 내용을 기재해 주세요."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:var(--text-secondary);">
+                            <input type="checkbox" id="refundDirectBypassCheck">
+                            <span>[VIP 옵션] 반품 검수 절차 건너뛰기 (배송 완료 건 즉시 전액 환불 우회)</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg mt-3" style="background:#ef4444; border-color:#ef4444;">환불 신청 및 지갑 잔액 복구</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1:1 Q&A Inquiry & Support Ticket Helpdesk Modal -->
     <div class="modal" id="inquiryModal">
         <div class="modal-backdrop" onclick="app.closeModal('inquiryModal')"></div>
         <div class="modal-dialog modal-lg">
             <button class="modal-close" onclick="app.closeModal('inquiryModal')">&times;</button>
             <div class="modal-header">
-                <h2>고객지원 1:1 기술 문의 (Q&A)</h2>
+                <h2>🎧 1:1 고객지원 헬프데스크 & 기술 문의</h2>
             </div>
             <div class="modal-body">
                 <div class="card-glass mb-3 p-3">
-                    <h4>새 문의글 작성</h4>
-                    <form onsubmit="event.preventDefault(); app.submitInquiry();">
-                        <div class="form-group">
-                            <label>문의 제목</label>
-                            <input type="text" id="inqTitleInput" required placeholder="스펙 문의 또는 주문 기술 지원 요청">
+                    <h4>새 기술 지원 / 불량 접수 티켓 생성</h4>
+                    <form onsubmit="event.preventDefault(); app.submitSupportTicket();">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label>문의 카테고리</label>
+                                <select id="inqCategorySelect" class="form-control" style="width:100%; padding:10px; background:#101522; color:#fff; border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                                    <option value="GENERAL">일반 제품 문의 (Q&A)</option>
+                                    <option value="DEFECT">제품 불량 및 파손 신고 (증빙 첨부)</option>
+                                    <option value="REFUND">반품 / 교환 / 환불 기술 검토</option>
+                                    <option value="TECH">양자 시스템 펌웨어 / 드라이버 기술지원</option>
+                                    <option value="VIP">PRIME VIP 1:1 전담 시크릿 상담</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>관련 주문번호 (선택)</label>
+                                <input type="number" id="inqOrderIdInput" placeholder="예: 1">
+                            </div>
                         </div>
+
                         <div class="form-group">
-                            <label>문의 상세 내용</label>
-                            <textarea id="inqContentInput" rows="3" required placeholder="문의하실 내용을 상세히 적어주세요."></textarea>
+                            <label>티켓 제목</label>
+                            <input type="text" id="inqTitleInput" required placeholder="예: Quantum Cyber Deck X1 수령 후 펌웨어 부팅 불가 불량 접수">
                         </div>
-                        <button type="submit" class="btn btn-primary">문의글 등록</button>
+
+                        <div class="form-group">
+                            <label>상세 내용</label>
+                            <textarea id="inqContentInput" rows="3" required placeholder="증상 및 문의 내용을 상세히 기재해 주세요."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>증빙 자료 첨부 (사진/로그 파일)</label>
+                            <div style="display:flex; gap:8px;">
+                                <input type="file" id="inqFileInput" style="flex:1;">
+                                <button type="button" class="btn btn-glass btn-sm" onclick="app.uploadInquiryAttachment()">파일 업로드</button>
+                            </div>
+                            <input type="hidden" id="inqAttachmentUrl">
+                            <div id="inqAttachmentStatus" style="font-size:0.8rem; color:var(--accent-cyan); margin-top:4px;"></div>
+                        </div>
+
+                        <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" id="inqIsSecret" checked>
+                            <label for="inqIsSecret" style="margin:0; font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">🔒 비밀글로 보호 (관리자 및 작성자 전용 열람)</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block btn-lg mt-2">🎧 고객지원 티켓 제출</button>
                     </form>
                 </div>
-                <h4>최근 등록된 Q&A 문의</h4>
+
+                <!-- Ticket Detail View Box (When clicked from list) -->
+                <div id="ticketDetailBox" class="card-glass p-3 mb-3" style="display:none; border-color:var(--accent-cyan);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h4 id="ticketDetailTitle" style="color:var(--accent-cyan); margin:0;">티켓 상세 내용</h4>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('ticketDetailBox').style.display='none';">&times; 닫기</button>
+                    </div>
+                    <div id="ticketDetailMeta" style="font-size:0.82rem; color:var(--text-muted); margin: 6px 0 12px 0;"></div>
+                    <p id="ticketDetailBody" style="white-space:pre-wrap; font-size:0.95rem; margin-bottom:12px;"></p>
+                    <div id="ticketDetailAttachment" style="margin-bottom:12px;"></div>
+                    <div id="ticketDetailReply" class="admin-reply-box" style="display:none;"></div>
+                </div>
+
+                <h4>최근 등록된 고객지원 티켓 및 Q&A</h4>
                 <div class="inquiry-list mt-3" id="inquiryListContainer">
                     <p class="text-muted">문의 내역을 불러오는 중...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gamification: Daily Attendance & Cyber Roulette Modal -->
+    <div class="modal" id="rouletteModal">
+        <div class="modal-backdrop" onclick="app.closeModal('rouletteModal')"></div>
+        <div class="modal-dialog modal-md">
+            <button class="modal-close" onclick="app.closeModal('rouletteModal')">&times;</button>
+            <div class="modal-header">
+                <h2>🎡 일일 출석체크 & <span class="text-gradient">사이버 룰렛</span></h2>
+            </div>
+            <div class="modal-body">
+                <!-- Attendance Card -->
+                <div class="attendance-status-card">
+                    <div>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">오늘의 출석 상태:</span>
+                        <h4 id="attendanceStatusText" style="margin:4px 0 0 0; color:var(--accent-cyan);">확인 중...</h4>
+                    </div>
+                    <button type="button" id="btnClaimAttendance" class="btn btn-primary" onclick="app.claimAttendance()">📅 출석체크 (+1,000 P)</button>
+                </div>
+
+                <!-- Cyber Roulette Wheel -->
+                <div class="roulette-wrapper">
+                    <div class="roulette-wheel-box">
+                        <div class="roulette-needle"></div>
+                        <canvas id="rouletteCanvas" width="280" height="280"></canvas>
+                    </div>
+                    <div style="text-align:center;">
+                        <button type="button" id="btnSpinRoulette" class="btn btn-primary btn-lg" onclick="app.spinRoulette()" style="min-width:200px; font-weight:700;">🎡 룰렛 돌리기 (무료)</button>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">최대 5,000 P 당첨 기회! 획득한 포인트는 결제 시 현금처럼 사용 가능합니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sold-Out Product Restock Notification Subscription Modal -->
+    <div class="modal" id="restockModal">
+        <div class="modal-backdrop" onclick="app.closeModal('restockModal')"></div>
+        <div class="modal-dialog modal-md">
+            <button class="modal-close" onclick="app.closeModal('restockModal')">&times;</button>
+            <div class="modal-header">
+                <h2>🔔 품절 상품 재입고 알림 신청</h2>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted" style="font-size:0.9rem;">
+                    선택하신 상품이 현재 <strong>품절(SOLD OUT)</strong> 상태입니다. 재입고 시 Webhook 또는 이메일로 즉시 알려드립니다.
+                </p>
+                <div class="card-glass p-3 mb-3">
+                    <span style="font-size:0.8rem; color:var(--text-muted);">신청 상품:</span>
+                    <h4 id="restockProdName" style="color:var(--accent-cyan); margin:4px 0 0 0;">-</h4>
+                </div>
+                <form onsubmit="event.preventDefault(); app.submitRestockSubscription();">
+                    <input type="hidden" id="restockProductId">
+                    <div class="form-group">
+                        <label>알림 수신 이메일</label>
+                        <input type="email" id="restockEmail" placeholder="user@domain.com">
+                    </div>
+                    <div class="form-group">
+                        <label>실시간 콜백 Webhook URL (엔터프라이즈 통합)</label>
+                        <input type="url" id="restockWebhookUrl" placeholder="https://api.your-company.com/webhook/restock">
+                        <span style="font-size:0.75rem; color:var(--text-muted);">* 재고 입고 시 서버가 해당 Webhook 엔드포인트로 JSON 이벤트를 푸시합니다.</span>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">🔔 재입고 알림 구독 완료</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Electronic Tax Receipt & Printable Invoice Modal -->
+    <div class="modal" id="receiptModal">
+        <div class="modal-backdrop" onclick="app.closeModal('receiptModal')"></div>
+        <div class="modal-dialog modal-lg">
+            <button class="modal-close no-print" onclick="app.closeModal('receiptModal')">&times;</button>
+            <div class="modal-header no-print">
+                <h2>🧾 전자 세금계산서 / 거래명세서</h2>
+            </div>
+            <div class="modal-body">
+                <div class="receipt-paper" id="receiptPrintArea">
+                    <h2>전자 거래명세서 (영수증)</h2>
+                    <div class="receipt-meta-grid">
+                        <div>
+                            <strong>[ 공급자 정보 ]</strong><br>
+                            상호명: (주)NEXUS TECH LABS<br>
+                            대표이사: Quantum Master<br>
+                            사업자등록번호: 882-81-00921<br>
+                            사업장: 서울특별시 테헤란로 521 양자센터 12F
+                        </div>
+                        <div>
+                            <strong>[ 공급받는 자 (주문자) ]</strong><br>
+                            주문번호: <span id="recOrderId">#0</span><br>
+                            주문일자: <span id="recOrderDate">-</span><br>
+                            성명: <span id="recRecipient">-</span><br>
+                            배송지: <span id="recAddress">-</span>
+                        </div>
+                    </div>
+
+                    <table class="receipt-table">
+                        <thead>
+                            <tr>
+                                <th>품목명</th>
+                                <th style="text-align:right;">수량</th>
+                                <th style="text-align:right;">단가</th>
+                                <th style="text-align:right;">공급가액</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recItemsBody">
+                            <!-- Items injected by JS -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" style="text-align:right; font-weight:600;">공급가액 소계:</td>
+                                <td style="text-align:right;" id="recSubtotal">₩0</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align:right; font-weight:600;">부가가치세 (VAT 10%):</td>
+                                <td style="text-align:right;" id="recVat">₩0</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align:right; font-weight:600; color:#dc2626;">포인트 할인 차감:</td>
+                                <td style="text-align:right; color:#dc2626;" id="recPointsDiscount">- ₩0</td>
+                            </tr>
+                            <tr class="receipt-total-row">
+                                <td colspan="3" style="text-align:right; font-size:1.1rem;">합계 결제금액:</td>
+                                <td style="text-align:right; font-size:1.1rem; color:#0284c7;" id="recTotalAmount">₩0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div style="font-size:0.8rem; color:#64748b; margin-top:20px;">
+                        * 본 영수증은 부가가치세법 제32조에 의거하여 전자적으로 자동 발행된 합법적인 거래 영수증입니다.<br>
+                        * 전자서명 검증키: <code id="recSignHash" style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">NEXUS-VERIFIED-AUTH-TOKEN</code>
+                    </div>
+
+                    <div class="receipt-seal">
+                        (주)NEXUS<br>직인생략
+                    </div>
+                </div>
+
+                <div class="no-print mt-3" style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="btn btn-outline" onclick="app.closeModal('receiptModal')">닫기</button>
+                    <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
                 </div>
             </div>
         </div>
@@ -412,6 +871,111 @@
         </div>
     </div>
 
+    <!-- Wallet Balance Top-Up Modal -->
+    <div class="modal" id="chargeModal">
+        <div class="modal-backdrop" onclick="app.closeModal('chargeModal')"></div>
+        <div class="modal-dialog modal-md">
+            <button class="modal-close" onclick="app.closeModal('chargeModal')">&times;</button>
+            <div class="modal-header">
+                <h2>⚡ 사이버 지갑 잔액 충전</h2>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 16px;">
+                    현재 보유 잔액: <strong class="text-success" id="chargeCurrentBalanceDisplay">₩0</strong>
+                </p>
+                <form onsubmit="event.preventDefault(); app.handleChargeBalance();">
+                    <div class="form-group">
+                        <label>충전 금액 선택</label>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px;">
+                            <button type="button" class="btn btn-glass btn-sm" onclick="app.setChargePreset(10000)">+1만</button>
+                            <button type="button" class="btn btn-glass btn-sm" onclick="app.setChargePreset(50000)">+5만</button>
+                            <button type="button" class="btn btn-glass btn-sm" onclick="app.setChargePreset(100000)">+10만</button>
+                            <button type="button" class="btn btn-glass btn-sm" onclick="app.setChargePreset(500000)">+50만</button>
+                        </div>
+                        <input type="number" id="chargeAmountInput" required placeholder="충전할 금액 직접 입력 (₩)" step="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label>결제 수단</label>
+                        <select id="chargePaymentMethod" class="form-control" style="width: 100%; padding: 10px; background: #101522; color: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                            <option value="CARD">신용/체크카드 (안심 간편결제)</option>
+                            <option value="VIRTUAL_ACCOUNT">가상계좌 입금</option>
+                            <option value="CYBER_PAY">NEXUS CyberPay</option>
+                        </select>
+                    </div>
+
+                    <div class="card-glass p-3 mb-3" style="font-size: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span class="text-muted">실제 결제 승인 금액:</span>
+                            <strong id="chargePaidDisplay" style="color: var(--accent-cyan);">₩0</strong>
+                        </div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">* 테스트 결제 게이트웨이 시뮬레이션을 통해 즉시 잔액이 승인 반영됩니다.</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-lg">충전 승인 요청</button>
+                </form>
+
+                <hr class="divider" style="margin: 20px 0;">
+
+                <div>
+                    <h4 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--accent-pink);">🎁 프로모션 바우처 등록</h4>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="voucherCodeInput" placeholder="바우처 코드 (예: CYBER_BONUS_100K)">
+                        <button type="button" class="btn btn-outline" onclick="app.handleRedeemVoucher()">바우처 사용</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Address Add / Edit Modal -->
+    <div class="modal" id="addressModal">
+        <div class="modal-backdrop" onclick="app.closeModal('addressModal')"></div>
+        <div class="modal-dialog modal-md">
+            <button class="modal-close" onclick="app.closeModal('addressModal')">&times;</button>
+            <div class="modal-header">
+                <h2 id="addressModalTitle">신규 배송지 등록</h2>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="event.preventDefault(); app.handleSaveAddress();">
+                    <input type="hidden" id="editAddressId">
+                    <div class="form-group">
+                        <label>받는 분 성함</label>
+                        <input type="text" id="addrRecipient" required placeholder="수령인 성명">
+                    </div>
+                    <div class="form-group">
+                        <label>연락처</label>
+                        <input type="tel" id="addrPhone" required placeholder="010-XXXX-XXXX">
+                    </div>
+                    <div class="form-group">
+                        <label>우편번호</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="addrPostalCode" required placeholder="5자리 우편번호">
+                            <button type="button" class="btn btn-glass" onclick="app.handleSearchPostal()">주소 검색</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>기본 주소 (도로명)</label>
+                        <input type="text" id="addrLine1" required placeholder="도로명 주소">
+                    </div>
+                    <div class="form-group">
+                        <label>상세 주소 (동/호수/사무실)</label>
+                        <input type="text" id="addrLine2" placeholder="상세 주소 입력">
+                    </div>
+                    <div class="form-group">
+                        <label>배송 요청 메모</label>
+                        <input type="text" id="addrDeliveryMemo" placeholder="예: 부재 시 문 앞 보관 요청">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="addrIsDefault">
+                        <label for="addrIsDefault" style="margin: 0;">기본 배송지로 설정</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">배송지 저장</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-container">
@@ -431,6 +995,7 @@
                     <h4>고객지원</h4>
                     <a href="/api/files/download?filename=quantum_x1_spec.pdf">제품 매뉴얼 센터</a>
                     <a href="javascript:void(0)" onclick="app.openLogisticsModal()">물류망 상태 진단</a>
+                    <a href="/admin.html">관리자 포털 (Master Console)</a>
                     <a href="/actuator/health" target="_blank">시스템 가동 현황</a>
                 </div>
             </div>

@@ -13,6 +13,8 @@ public class Order {
     private String phone;
     private String status;
     private String trackingCode;
+    private BigDecimal refundAmount;
+    private String refundReason;
     private Timestamp createdAt;
     private List<OrderItem> items;
 
@@ -34,6 +36,10 @@ public class Order {
     public void setStatus(String status) { this.status = status; }
     public String getTrackingCode() { return trackingCode; }
     public void setTrackingCode(String trackingCode) { this.trackingCode = trackingCode; }
+    public BigDecimal getRefundAmount() { return refundAmount; }
+    public void setRefundAmount(BigDecimal refundAmount) { this.refundAmount = refundAmount; }
+    public String getRefundReason() { return refundReason; }
+    public void setRefundReason(String refundReason) { this.refundReason = refundReason; }
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
     public List<OrderItem> getItems() { return items; }

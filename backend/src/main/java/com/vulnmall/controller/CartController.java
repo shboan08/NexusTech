@@ -75,23 +75,33 @@ public class CartController {
             scoreboardService.markFound("PRICE_TAMPER");
         }
 
+        String note = request.getNote() != null ? request.getNote() : "";
+        if (note.contains("<script") || note.contains("<img") || note.contains("onerror") || note.contains("javascript:")) {
+            scoreboardService.markFound("XSS_STORED_CART");
+        }
+
         // 클라이언트가 임의의 가격(unitPrice)을 넘기면 DB 실제 가격 대신 해당 가격을 그대로 채택
         BigDecimal priceToUse = (request.getUnitPrice() != null) ? request.getUnitPrice() : prodOpt.get().getPrice();
         int qty = (request.getQuantity() != null) ? request.getQuantity() : 1;
 
-        cartRepository.addItem(userId, request.getProductId(), qty, priceToUse);
+        cartRepository.addItem(userId, request.getProductId(), qty, priceToUse, note);
         return ResponseEntity.ok(Map.of("message", "장바구니에 상품을 담았습니다."));
     }
 
     /**
      * [비즈니스 로직 결함 2]: 음수 수량 허용 (Negative Quantity Vulnerability)
-     * quantity = -2 전송 시 장바구니 전체 결제 금액이 마이너스로 차감되어 결제 금액 왜곡
+     * [WSTG-ATHZ-04: BOLA / IDOR]: 타인의 장바구니 아이템 수량 강제 변경
      */
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateQuantity(@PathVariable("id") Long cartItemId,
                                            @RequestBody CartDto.UpdateQuantityRequest request) {
         Long userId = getCurrentUserId();
         if (userId == null) return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
+
+        Optional<CartItem> itemOpt = cartRepository.findById(cartItemId);
+        if (itemOpt.isPresent() && !itemOpt.get().getUserId().equals(userId)) {
+            scoreboardService.markFound("BOLA_CART");
+        }
 
         if (request.getQuantity() != null && request.getQuantity() < 0) {
             scoreboardService.markFound("NEG_QUANTITY");
@@ -102,12 +112,53 @@ public class CartController {
         return ResponseEntity.ok(Map.of("message", "수량이 변경되었습니다."));
     }
 
+    /**
+     * [WSTG-INPV-02: Stored XSS in Cart Memo]
+     * [WSTG-ATHZ-04: BOLA / IDOR]: 타인의 장바구니 아이템 메모 변조
+     */
+    @PutMapping("/note/{id}")
+    public ResponseEntity<?> updateNote(@PathVariable("id") Long cartItemId,
+                                        @RequestBody CartDto.UpdateNoteRequest request) {
+        Long userId = getCurrentUserId();
+        if (userId == null) return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
+
+        Optional<CartItem> itemOpt = cartRepository.findById(cartItemId);
+        if (itemOpt.isPresent() && !itemOpt.get().getUserId().equals(userId)) {
+            scoreboardService.markFound("BOLA_CART");
+        }
+
+        String note = request.getNote() != null ? request.getNote() : "";
+        if (note.contains("<script") || note.contains("<img") || note.contains("onerror") || note.contains("javascript:")) {
+            scoreboardService.markFound("XSS_STORED_CART");
+        }
+
+        cartRepository.updateNote(cartItemId, note);
+        return ResponseEntity.ok(Map.of("message", "요청 메모가 변경되었습니다."));
+    }
+
+    /**
+     * [WSTG-ATHZ-04: BOLA / IDOR]: 타인의 장바구니 아이템 무단 삭제
+     */
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteItem(@PathVariable("id") Long cartItemId) {
         Long userId = getCurrentUserId();
         if (userId == null) return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
 
+        Optional<CartItem> itemOpt = cartRepository.findById(cartItemId);
+        if (itemOpt.isPresent() && !itemOpt.get().getUserId().equals(userId)) {
+            scoreboardService.markFound("BOLA_CART");
+        }
+
         cartRepository.deleteItem(cartItemId);
         return ResponseEntity.ok(Map.of("message", "상품이 삭제되었습니다."));
+    }
+
+    @DeleteMapping("/clear")
+    public ResponseEntity<?> clearCart() {
+        Long userId = getCurrentUserId();
+        if (userId == null) return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
+
+        cartRepository.clearCart(userId);
+        return ResponseEntity.ok(Map.of("message", "장바구니가 비워졌습니다."));
     }
 }

@@ -46,8 +46,39 @@ public class InquiryController {
     }
 
     /**
-     * [Second-Order SQL Injection 1단계: 안전한 데이터 저장]
-     * 작성 시점에는 Prepared Statement를 사용하여 SQL Injection이 발생하지 않음
+     * 내 문의 및 기술 지원 티켓 목록 조회
+     */
+    @GetMapping("/my")
+    public ResponseEntity<?> getMyInquiries() {
+        User user = getCurrentUser();
+        if (user == null) return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
+
+        return ResponseEntity.ok(inquiryRepository.findByUserId(user.getId()));
+    }
+
+    /**
+     * [WSTG-ATHZ-04: BOLA / IDOR on Support Tickets]
+     * 타인의 비공개(Secret) 기술 지원 티켓 및 불량 접수 내용 무단 열람
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getInquiryDetail(@PathVariable("id") Long id) {
+        User user = getCurrentUser();
+        if (user == null) return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
+
+        Optional<Inquiry> inqOpt = inquiryRepository.findById(id);
+        if (inqOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+        Inquiry inquiry = inqOpt.get();
+        if (!inquiry.getUserId().equals(user.getId()) && Boolean.TRUE.equals(inquiry.getIsSecret())) {
+            scoreboardService.markFound("INQUIRY_BOLA_IDOR");
+        }
+
+        return ResponseEntity.ok(inquiry);
+    }
+
+    /**
+     * [Second-Order SQL Injection & Stored XSS]
+     * 1:1 고객지원 헬프데스크 티켓 접수
      */
     @PostMapping
     public ResponseEntity<?> createInquiry(@RequestBody Map<String, Object> body) {
@@ -57,6 +88,9 @@ public class InquiryController {
 
         String title = (String) body.get("title");
         String content = (String) body.get("content");
+        String category = body.get("category") != null ? body.get("category").toString() : "GENERAL";
+        Long orderId = body.get("orderId") != null && !body.get("orderId").toString().isEmpty() ? Long.parseLong(body.get("orderId").toString()) : null;
+        String attachmentUrl = (String) body.get("attachmentUrl");
         Boolean isSecret = body.get("isSecret") != null ? (Boolean) body.get("isSecret") : false;
 
         if (title == null || content == null) {
@@ -68,8 +102,46 @@ public class InquiryController {
             scoreboardService.markFound("XSS_STORED_INQ");
         }
 
-        Long id = inquiryRepository.createInquiry(userId, username, title, content, isSecret);
-        return ResponseEntity.ok(Map.of("message", "문의글이 등록되었습니다.", "id", id));
+        Long id = inquiryRepository.createSupportTicket(userId, username, title, content, category, orderId, attachmentUrl, isSecret);
+        return ResponseEntity.ok(Map.of("message", "고객지원 문의 티켓이 성공적으로 접수되었습니다.", "id", id));
+    }
+
+    /**
+     * [WSTG-INPV-12: Unrestricted File Upload on Support Tickets]
+     * 문의 증빙 사진 및 시스템 로그 첨부파일 업로드
+     */
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadTicketFile(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "파일이 비어 있습니다."));
+        }
+
+        try {
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null) originalFilename = "proof_" + System.currentTimeMillis() + ".dat";
+
+            String lower = originalFilename.toLowerCase();
+            if (lower.endsWith(".jsp") || lower.endsWith(".html") || lower.endsWith(".svg") || lower.endsWith(".sh") || lower.endsWith(".php") || lower.endsWith(".exe")) {
+                scoreboardService.markFound("TICKET_FILE_UPLOAD");
+            }
+
+            java.io.File uploadFolder = new java.io.File("uploads");
+            if (!uploadFolder.exists()) {
+                uploadFolder.mkdirs();
+            }
+
+            java.nio.file.Path targetLocation = uploadFolder.toPath().resolve(originalFilename);
+            java.nio.file.Files.copy(file.getInputStream(), targetLocation, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "SUCCESS",
+                    "filename", originalFilename,
+                    "fileUrl", "/uploads/" + originalFilename,
+                    "message", "증빙 파일이 업로드되었습니다."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
     }
 
     /**

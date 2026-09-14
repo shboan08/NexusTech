@@ -50,4 +50,9 @@ public class CouponRepository {
     public void markCouponUsed(String code) {
         jdbcTemplate.update("UPDATE coupons SET is_used = TRUE WHERE code = ?", code);
     }
+
+    public void createCoupon(String code, java.math.BigDecimal discountAmount) {
+        String sql = "INSERT INTO coupons (code, discount_amount, is_used) VALUES (?, ?, FALSE)";
+        jdbcTemplate.update(sql, code, discountAmount);
+    }
 }

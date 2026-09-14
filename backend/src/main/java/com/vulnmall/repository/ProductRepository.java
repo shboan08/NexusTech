@@ -33,6 +33,10 @@ public class ProductRepository {
             p.setImageUrl(rs.getString("image_url"));
             p.setManualFilename(rs.getString("manual_filename"));
             p.setIsHidden(rs.getBoolean("is_hidden"));
+            try {
+                p.setIsExclusive(rs.getBoolean("is_exclusive"));
+                p.setVipDiscountRate(rs.getInt("vip_discount_rate"));
+            } catch (SQLException ignored) {}
             p.setCreatedAt(rs.getTimestamp("created_at"));
             return p;
         }
@@ -48,8 +52,12 @@ public class ProductRepository {
     public List<Product> searchProducts(String keyword, String category, String sortBy, String sortOrder) {
         StringBuilder sql = new StringBuilder("SELECT * FROM products WHERE is_hidden = FALSE");
 
-        if (category != null && !category.trim().isEmpty() && !category.equalsIgnoreCase("ALL")) {
-            sql.append(" AND category = '").append(category.replace("'", "''")).append("'");
+        if (category != null && (category.equalsIgnoreCase("VIP_EXCLUSIVE") || category.equalsIgnoreCase("VIP"))) {
+            sql.append(" AND (is_exclusive = TRUE OR category = 'VIP_EXCLUSIVE')");
+        } else if (category != null && !category.trim().isEmpty() && !category.equalsIgnoreCase("ALL")) {
+            sql.append(" AND is_exclusive = FALSE AND category = '").append(category.replace("'", "''")).append("'");
+        } else {
+            sql.append(" AND is_exclusive = FALSE");
         }
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -88,6 +96,10 @@ public class ProductRepository {
         return jdbcTemplate.query("SELECT * FROM products ORDER BY id ASC", productRowMapper);
     }
 
+    public List<Product> findExclusiveProducts() {
+        return jdbcTemplate.query("SELECT * FROM products WHERE (is_exclusive = TRUE OR category = 'VIP_EXCLUSIVE') AND is_hidden = FALSE ORDER BY id ASC", productRowMapper);
+    }
+
     /**
      * [WSTG-INPV-05: Union-Based SQL Injection]
      * 카테고리 필터링 쿼리에 직접 결합하여 타 테이블(users, coupons 등)과 UNION 결합 허용
@@ -96,5 +108,47 @@ public class ProductRepository {
     public List<java.util.Map<String, Object>> filterByCategoryUnion(String category) {
         String sql = "SELECT id, name, category, price, description FROM products WHERE is_hidden = FALSE AND category = '" + category + "'";
         return jdbcTemplate.queryForList(sql);
+    }
+
+    public Long createProduct(Product product) {
+        String sql = "INSERT INTO products (name, category, price, stock, description, image_url, manual_filename, is_hidden) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        org.springframework.jdbc.support.KeyHolder keyHolder = new org.springframework.jdbc.support.GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            java.sql.PreparedStatement ps = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, product.getName());
+            ps.setString(2, product.getCategory());
+            ps.setBigDecimal(3, product.getPrice());
+            ps.setInt(4, product.getStock() != null ? product.getStock() : 50);
+            ps.setString(5, product.getDescription());
+            ps.setString(6, product.getImageUrl());
+            ps.setString(7, product.getManualFilename() != null ? product.getManualFilename() : "quantum_x1_spec.pdf");
+            ps.setBoolean(8, Boolean.TRUE.equals(product.getIsHidden()));
+            return ps;
+        }, keyHolder);
+        return keyHolder.getKey() != null ? keyHolder.getKey().longValue() : null;
+    }
+
+    public void updateProduct(Long id, Product product) {
+        String sql = "UPDATE products SET name = ?, category = ?, price = ?, stock = ?, description = ?, " +
+                "image_url = ?, manual_filename = ?, is_hidden = ? WHERE id = ?";
+        jdbcTemplate.update(sql,
+                product.getName(), product.getCategory(), product.getPrice(), product.getStock(),
+                product.getDescription(), product.getImageUrl(), product.getManualFilename(),
+                Boolean.TRUE.equals(product.getIsHidden()), id);
+    }
+
+    public void deleteProduct(Long id) {
+        jdbcTemplate.update("DELETE FROM products WHERE id = ?", id);
+    }
+
+    public void deductStock(Long productId, int quantity) {
+        String sql = "UPDATE products SET stock = stock - ? WHERE id = ?";
+        jdbcTemplate.update(sql, quantity, productId);
+    }
+
+    public void updateStock(Long productId, int newStock) {
+        String sql = "UPDATE products SET stock = ? WHERE id = ?";
+        jdbcTemplate.update(sql, newStock, productId);
     }
 }

@@ -34,6 +34,10 @@ public class OrderRepository {
             o.setPhone(rs.getString("phone"));
             o.setStatus(rs.getString("status"));
             o.setTrackingCode(rs.getString("tracking_code"));
+            try {
+                o.setRefundAmount(rs.getBigDecimal("refund_amount"));
+                o.setRefundReason(rs.getString("refund_reason"));
+            } catch (SQLException ignored) {}
             o.setCreatedAt(rs.getTimestamp("created_at"));
             return o;
         }
@@ -109,6 +113,11 @@ public class OrderRepository {
     public void updateStatus(Long orderId, String status) {
         String sql = "UPDATE orders SET status = ? WHERE id = ?";
         jdbcTemplate.update(sql, status, orderId);
+    }
+
+    public void processRefund(Long orderId, BigDecimal refundAmount, String reason) {
+        String sql = "UPDATE orders SET status = 'REFUNDED', refund_amount = ?, refund_reason = ? WHERE id = ?";
+        jdbcTemplate.update(sql, refundAmount, reason, orderId);
     }
 
     /**

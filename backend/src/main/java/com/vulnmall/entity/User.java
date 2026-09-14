@@ -10,6 +10,11 @@ public class User {
     private String email;
     private String role;
     private BigDecimal balance;
+    private Integer points;
+    private String membershipTier;
+    private Boolean membershipActive;
+    private String membershipWelcomeNote;
+    private Timestamp membershipExpiresAt;
     private String avatarUrl;
     private String securityQuestion;
     private String securityAnswer;
@@ -30,6 +35,16 @@ public class User {
     public void setRole(String role) { this.role = role; }
     public BigDecimal getBalance() { return balance; }
     public void setBalance(BigDecimal balance) { this.balance = balance; }
+    public Integer getPoints() { return points != null ? points : 0; }
+    public void setPoints(Integer points) { this.points = points; }
+    public String getMembershipTier() { return membershipTier; }
+    public void setMembershipTier(String membershipTier) { this.membershipTier = membershipTier; }
+    public Boolean getMembershipActive() { return membershipActive; }
+    public void setMembershipActive(Boolean membershipActive) { this.membershipActive = membershipActive; }
+    public String getMembershipWelcomeNote() { return membershipWelcomeNote; }
+    public void setMembershipWelcomeNote(String membershipWelcomeNote) { this.membershipWelcomeNote = membershipWelcomeNote; }
+    public Timestamp getMembershipExpiresAt() { return membershipExpiresAt; }
+    public void setMembershipExpiresAt(Timestamp membershipExpiresAt) { this.membershipExpiresAt = membershipExpiresAt; }
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     public String getSecurityQuestion() { return securityQuestion; }

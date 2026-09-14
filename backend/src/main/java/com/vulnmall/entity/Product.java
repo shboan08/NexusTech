@@ -13,6 +13,8 @@ public class Product {
     private String imageUrl;
     private String manualFilename;
     private Boolean isHidden;
+    private Boolean isExclusive;
+    private Integer vipDiscountRate;
     private Timestamp createdAt;
 
     public Product() {}
@@ -35,6 +37,10 @@ public class Product {
     public void setManualFilename(String manualFilename) { this.manualFilename = manualFilename; }
     public Boolean getIsHidden() { return isHidden; }
     public void setIsHidden(Boolean isHidden) { this.isHidden = isHidden; }
+    public Boolean getIsExclusive() { return isExclusive; }
+    public void setIsExclusive(Boolean isExclusive) { this.isExclusive = isExclusive; }
+    public Integer getVipDiscountRate() { return vipDiscountRate; }
+    public void setVipDiscountRate(Integer vipDiscountRate) { this.vipDiscountRate = vipDiscountRate; }
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 }

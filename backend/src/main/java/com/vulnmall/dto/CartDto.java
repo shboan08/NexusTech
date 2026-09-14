@@ -8,6 +8,7 @@ public class CartDto {
         private Long productId;
         private Integer quantity;
         private BigDecimal unitPrice; // 클라이언트가 단가를 임의 조작 가능
+        private String note;
 
         public Long getProductId() { return productId; }
         public void setProductId(Long productId) { this.productId = productId; }
@@ -15,6 +16,8 @@ public class CartDto {
         public void setQuantity(Integer quantity) { this.quantity = quantity; }
         public BigDecimal getUnitPrice() { return unitPrice; }
         public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
+        public String getNote() { return note; }
+        public void setNote(String note) { this.note = note; }
     }
 
     public static class UpdateQuantityRequest {
@@ -22,5 +25,12 @@ public class CartDto {
 
         public Integer getQuantity() { return quantity; }
         public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    }
+
+    public static class UpdateNoteRequest {
+        private String note;
+
+        public String getNote() { return note; }
+        public void setNote(String note) { this.note = note; }
     }
 }

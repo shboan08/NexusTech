@@ -29,6 +29,9 @@ public class CartRepository {
             item.setUnitPrice(rs.getBigDecimal("unit_price"));
             item.setProductName(rs.getString("product_name"));
             item.setProductImageUrl(rs.getString("product_image_url"));
+            try {
+                item.setNote(rs.getString("note"));
+            } catch (Exception ignored) {}
             return item;
         }
     };
@@ -40,7 +43,15 @@ public class CartRepository {
         return jdbcTemplate.query(sql, cartRowMapper, userId);
     }
 
-    public void addItem(Long userId, Long productId, int quantity, java.math.BigDecimal unitPrice) {
+    public java.util.Optional<CartItem> findById(Long cartItemId) {
+        String sql = "SELECT c.*, p.name AS product_name, p.image_url AS product_image_url " +
+                "FROM cart_items c JOIN products p ON c.product_id = p.id " +
+                "WHERE c.id = ?";
+        List<CartItem> list = jdbcTemplate.query(sql, cartRowMapper, cartItemId);
+        return list.isEmpty() ? java.util.Optional.empty() : java.util.Optional.of(list.get(0));
+    }
+
+    public void addItem(Long userId, Long productId, int quantity, java.math.BigDecimal unitPrice, String note) {
         // 이미 담겨있는지 확인
         String checkSql = "SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ?";
         List<CartItem> existing = jdbcTemplate.query(checkSql, (rs, rowNum) -> {
@@ -53,15 +64,20 @@ public class CartRepository {
         if (!existing.isEmpty()) {
             CartItem item = existing.get(0);
             int newQty = item.getQuantity() + quantity;
-            jdbcTemplate.update("UPDATE cart_items SET quantity = ?, unit_price = ? WHERE id = ?", newQty, unitPrice, item.getId());
+            jdbcTemplate.update("UPDATE cart_items SET quantity = ?, unit_price = ?, note = ? WHERE id = ?",
+                    newQty, unitPrice, note, item.getId());
         } else {
-            jdbcTemplate.update("INSERT INTO cart_items (user_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)",
-                    userId, productId, quantity, unitPrice);
+            jdbcTemplate.update("INSERT INTO cart_items (user_id, product_id, quantity, unit_price, note) VALUES (?, ?, ?, ?, ?)",
+                    userId, productId, quantity, unitPrice, note != null ? note : "");
         }
     }
 
     public void updateQuantity(Long cartItemId, int quantity) {
         jdbcTemplate.update("UPDATE cart_items SET quantity = ? WHERE id = ?", quantity, cartItemId);
+    }
+
+    public void updateNote(Long cartItemId, String note) {
+        jdbcTemplate.update("UPDATE cart_items SET note = ? WHERE id = ?", note, cartItemId);
     }
 
     public void deleteItem(Long cartItemId) {

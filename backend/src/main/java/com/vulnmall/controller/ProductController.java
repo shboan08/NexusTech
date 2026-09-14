@@ -19,12 +19,15 @@ public class ProductController {
     private final ProductRepository productRepository;
     private final ReviewRepository reviewRepository;
     private final com.vulnmall.service.ScoreboardService scoreboardService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public ProductController(ProductRepository productRepository, ReviewRepository reviewRepository,
-                             com.vulnmall.service.ScoreboardService scoreboardService) {
+                             com.vulnmall.service.ScoreboardService scoreboardService,
+                             org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.productRepository = productRepository;
         this.reviewRepository = reviewRepository;
         this.scoreboardService = scoreboardService;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     /**
@@ -99,5 +102,77 @@ public class ProductController {
         }
         List<Map<String, Object>> products = productRepository.filterByCategoryUnion(category);
         return ResponseEntity.ok(products);
+    }
+
+    /**
+     * [WSTG-INPV-19: Server-Side Request Forgery (SSRF)]
+     * 품절 상품 재입고 알림 신청 (Webhook URL 및 이메일 등록)
+     * Webhook URL에 대한 내부 사설망/클라우드 메타데이터 IP 검증 부재로 SSRF 취약점 노출
+     */
+    @PostMapping("/{id}/notify-restock")
+    public ResponseEntity<?> subscribeRestock(
+            @PathVariable("id") Long productId,
+            @RequestBody Map<String, Object> body) {
+
+        Optional<Product> prodOpt = productRepository.findById(productId);
+        if (prodOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String email = body.get("email") != null ? body.get("email").toString().trim() : "";
+        String webhookUrl = body.get("webhookUrl") != null ? body.get("webhookUrl").toString().trim() : "";
+
+        if (email.isEmpty() && webhookUrl.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "이메일 또는 Webhook URL 중 하나는 입력해야 합니다."));
+        }
+
+        // SSRF 검증 및 탐지
+        String testResult = null;
+        if (!webhookUrl.isEmpty()) {
+            String lowerUrl = webhookUrl.toLowerCase();
+            if (lowerUrl.contains("127.0.0.1") || lowerUrl.contains("localhost") || lowerUrl.contains("169.254")
+                    || lowerUrl.contains("0.0.0.0") || lowerUrl.contains("::1") || lowerUrl.contains("10.")
+                    || lowerUrl.contains("192.168.") || lowerUrl.contains("172.16.") || lowerUrl.contains("internal")
+                    || lowerUrl.contains("admin")) {
+                scoreboardService.markFound("RESTOCK_WEBHOOK_SSRF");
+            }
+
+            // 실제 서버 사이드 HTTP Webhook Ping 테스트 수행 (SSRF 실제 응답 반환)
+            try {
+                java.net.URL url = new java.net.URL(webhookUrl);
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(2500);
+                conn.setReadTimeout(2500);
+                conn.setRequestProperty("User-Agent", "NexusTech-RestockNotifier/2.0");
+
+                int code = conn.getResponseCode();
+                java.io.InputStream is = (code >= 200 && code < 400) ? conn.getInputStream() : conn.getErrorStream();
+                String preview = "";
+                if (is != null) {
+                    byte[] buf = is.readNBytes(256);
+                    preview = new String(buf, java.nio.charset.StandardCharsets.UTF_8);
+                }
+                testResult = "HTTP " + code + (preview.isEmpty() ? "" : ": " + preview.trim());
+            } catch (Exception e) {
+                testResult = "Webhook Ping Result: " + e.getMessage();
+            }
+        }
+
+        try {
+            jdbcTemplate.update(
+                "INSERT INTO restock_subscriptions (product_id, webhook_url, email, is_notified, created_at) VALUES (?, ?, ?, false, CURRENT_TIMESTAMP)",
+                productId, webhookUrl, email);
+        } catch (Exception ignored) {}
+
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("status", "SUCCESS");
+        resp.put("message", "재입고 알림 신청이 완료되었습니다.");
+        resp.put("productId", productId);
+        resp.put("productName", prodOpt.get().getName());
+        if (testResult != null) {
+            resp.put("webhookVerification", testResult);
+        }
+        return ResponseEntity.ok(resp);
     }
 }

@@ -53,6 +53,31 @@ public class ScoreboardService {
         VULN_CATALOG.put("WAF_BYPASS",       new String[]{"WSTG-CONF-05", "Config", "엔터프라이즈 WAF 우회"});
         VULN_CATALOG.put("INFO_EXPOSURE",    new String[]{"WSTG-INFO-05", "Config", "민감정보 노출 (.env/.git/backup.sql)"});
         VULN_CATALOG.put("FILE_UPLOAD",      new String[]{"WSTG-INPV-12", "Injection", "무제한 파일 업로드"});
+        VULN_CATALOG.put("BOLA_ADDRESS",     new String[]{"WSTG-ATHZ-04", "Auth", "BOLA/IDOR (타인 배송지 조회/수정/삭제)"});
+        VULN_CATALOG.put("XSS_STORED_ADDRESS",new String[]{"WSTG-INPV-02", "XSS", "Stored XSS (배송지 및 배송 메모)"});
+        VULN_CATALOG.put("SQLI_ADDRESS",     new String[]{"WSTG-INPV-05", "Injection", "SQL Injection (주소 및 우편번호 검색)"});
+        VULN_CATALOG.put("WALLET_NEGATIVE_CHARGE", new String[]{"WSTG-BUSL-09", "BizLogic", "결제 금액 음수 충전 및 PG 변조"});
+        VULN_CATALOG.put("WALLET_RACE_CONDITION", new String[]{"WSTG-BUSL-04", "BizLogic", "바우처 동시성 Race Condition"});
+        VULN_CATALOG.put("CSRF_WALLET",      new String[]{"WSTG-SESS-05", "Client", "CSRF (지갑 잔액 무단 송금)"});
+        VULN_CATALOG.put("XSS_STORED_CART",  new String[]{"WSTG-INPV-02", "XSS", "Stored XSS (장바구니 요청 메모)"});
+        VULN_CATALOG.put("BOLA_CART",        new String[]{"WSTG-ATHZ-04", "Auth", "BOLA/IDOR (타인 장바구니 품목 변조/삭제)"});
+        VULN_CATALOG.put("ADMIN_BYPASS",     new String[]{"WSTG-ATHZ-02", "Auth", "통합 관리자 포털 권한 우회"});
+        VULN_CATALOG.put("MEMBERSHIP_PRICE_TAMPER", new String[]{"WSTG-BUSL-09", "BizLogic", "Membership Price Tampering (가입 금액 변조)"});
+        VULN_CATALOG.put("MEMBERSHIP_BFLA_BYPASS",  new String[]{"WSTG-ATHZ-02", "Auth", "VIP Exclusive Deals BFLA (인가 우회)"});
+        VULN_CATALOG.put("MEMBERSHIP_COUPON_RACE",  new String[]{"WSTG-BUSL-04", "BizLogic", "VIP Coupon Race Condition (쿠폰 무한 중복 발급)"});
+        VULN_CATALOG.put("MEMBERSHIP_STORED_XSS",   new String[]{"WSTG-INPV-02", "XSS", "Membership Welcome Note Stored XSS"});
+        VULN_CATALOG.put("REFUND_RACE_CONDITION",   new String[]{"WSTG-BUSL-04", "BizLogic", "Double Refund Concurrency Race Condition (이중 환불)"});
+        VULN_CATALOG.put("REFUND_WORKFLOW_BYPASS",  new String[]{"WSTG-BUSL-02", "BizLogic", "Refund State & Workflow Step Skipping (반품 검수 우회)"});
+        VULN_CATALOG.put("REFUND_STORED_XSS",       new String[]{"WSTG-INPV-02", "XSS", "Refund Reason & Memo Stored XSS"});
+        VULN_CATALOG.put("WISHLIST_BOLA_IDOR",      new String[]{"WSTG-ATHZ-04", "Auth", "Wishlist & Custom Deck BOLA/IDOR (비공개 덱 무단 열람)"});
+        VULN_CATALOG.put("WISHLIST_STORED_XSS",     new String[]{"WSTG-INPV-02", "XSS", "Custom Deck Name & Description Stored XSS"});
+        VULN_CATALOG.put("ATTENDANCE_DATE_TAMPER",  new String[]{"WSTG-BUSL-04", "BizLogic", "Attendance Check-in Date Manipulation & Multi-Claim Race"});
+        VULN_CATALOG.put("ROULETTE_CLIENT_TAMPER",  new String[]{"WSTG-CLNT-01", "Client", "Roulette Client-Side Prize Manipulation"});
+        VULN_CATALOG.put("POINTS_NEGATIVE_EXPLOIT", new String[]{"WSTG-BUSL-09", "BizLogic", "Negative Points Usage & Compound Payment Tampering"});
+        VULN_CATALOG.put("INQUIRY_BOLA_IDOR",       new String[]{"WSTG-ATHZ-04", "Auth", "BOLA/IDOR on Support Ticket & Secret Inquiries"});
+        VULN_CATALOG.put("TICKET_FILE_UPLOAD",      new String[]{"WSTG-INPV-12", "Injection", "Unrestricted File Upload on Support Tickets"});
+        VULN_CATALOG.put("STOCK_RACE_CONDITION",    new String[]{"WSTG-BUSL-04", "BizLogic", "Inventory Overselling Concurrency Race Condition"});
+        VULN_CATALOG.put("RESTOCK_WEBHOOK_SSRF",    new String[]{"WSTG-INPV-19", "Injection", "Restock Notification Callback SSRF"});
     }
 
     // key -> found timestamp (null = not found)
